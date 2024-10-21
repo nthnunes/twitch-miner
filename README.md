@@ -38,7 +38,7 @@ Siga os passos abaixo para configurar o TwitchMiner no seu PC:
 
 ## Como funciona
 
-O bot é configurado para monitorar as transmissões ao vivo dos canais que você segue e minerar pontos automaticamente. Ele roda silenciosamente em segundo plano e você pode verificá-lo a qualquer momento.
+O bot é configurado para monitorar as transmissões ao vivo dos canais que forem adicionados e minerar pontos automaticamente. Ele roda silenciosamente em segundo plano e você pode verificá-lo a qualquer momento.
 
    ![Verificação no Gerenciador de Tarefas](./tutorial-images/image2.png)
 
