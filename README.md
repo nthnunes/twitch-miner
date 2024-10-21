@@ -1,4 +1,4 @@
-# TwitchMiner Bot
+# TwitchMiner
 
 TwitchMiner é um bot que automatiza a mineração de pontos em transmissões ao vivo na plataforma Twitch. Ele executa em segundo plano no sistema Windows e inicia automaticamente junto com o computador.
 
@@ -20,7 +20,7 @@ TwitchMiner é um bot que automatiza a mineração de pontos em transmissões ao
 Siga os passos abaixo para configurar o TwitchMiner no seu PC:
 
 1. **Download do Arquivo**
-   - Faça o download do arquivo `TwitchMiner.zip` e extraia-o para a pasta `Documentos` (Sim, tem que ser nessa pasta, caso contrário a inicialização automática não irá funcionar).
+   - Faça o download do arquivo [`TwitchMiner.zip`](https://github.com/nthnunes/twitch-miner/releases/tag/releases) e extraia-o para a pasta `Documentos` (Sim, tem que ser nessa pasta, caso contrário a inicialização automática não irá funcionar).
 
    ![Extração em Documentos](./tutorial-images/image1.jpeg)
 
