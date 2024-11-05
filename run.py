@@ -57,12 +57,11 @@ version = "1.9.9"
 
 def auto_updater():
     while True:
-        # Wait 24 hours (86.400 seconds)
-        time.sleep(86400)  
-
         if load_auto_update():
             update_thread = threading.Thread(target=search_updates, args=(load_auto_update(), version))
             update_thread.start()
+        # Wait 24 hours (86.400 seconds)
+        time.sleep(86400)
 
 def onBackground():
     icon_url = "https://8upload.com/image/652f72aea6996/icon-windowed.png"
