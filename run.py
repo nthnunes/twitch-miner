@@ -53,7 +53,7 @@ the_program_to_hide2 = find_window_by_title(final_path)
 firstTime_to_hide = win32gui.GetForegroundWindow()
 
 auto_update = load_auto_update()
-version = "1.9.9"
+version = "1.9.9.1"
 
 def auto_updater():
     while True:
