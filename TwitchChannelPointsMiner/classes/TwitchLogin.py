@@ -73,7 +73,7 @@ class TwitchLogin(object):
         self.shared_cookies = []
 
     def login_flow(self):
-        logger.info("You'll have to login to Twitch!")
+        logger.info("Vamos conectar sua conta Twitch ao TwitchMiner!")
 
         post_data = {
             "client_id": self.client_id,
@@ -86,7 +86,6 @@ class TwitchLogin(object):
         use_backup_flow = False
         # use_backup_flow = True
         while True:
-            logger.info("Trying the TV login method..")
 
             login_response = self.send_oauth_request(
                 "https://id.twitch.tv/oauth2/device", post_data)
@@ -113,13 +112,13 @@ class TwitchLogin(object):
                 expires_at = now + \
                     timedelta(seconds=login_response_json["expires_in"])
                 logger.info(
-                    "Open https://www.twitch.tv/activate"
+                    "Acesse https://www.twitch.tv/activate"
                 )
                 logger.info(
-                    f"and enter this code: {user_code}"
+                    f"e insira este código: {user_code}"
                 )
                 logger.info(
-                    f"Hurry up! It will expire in {int(login_response_json['expires_in'] / 60)} minutes!"
+                    f"O código expira em {int(login_response_json['expires_in'] / 60)} minutos!"
                 )
                 # twofa = input("2FA token: ")
                 # webbrowser.open_new_tab("https://www.twitch.tv/activate")
@@ -300,7 +299,7 @@ class TwitchLogin(object):
         return self.login_check_result
 
     def save_cookies(self, cookies_file):
-        logger.info("Saving cookies to your computer..")
+        logger.info("Salvando os cookies da sua conta..")
         cookies_dict = self.session.cookies.get_dict()
         # print(f"cookies_dict2pickle: {cookies_dict}")
         cookies_dict["auth-token"] = self.token

@@ -14,9 +14,11 @@ from TwitchChannelPointsMiner.classes.Settings import Priority, Events, Follower
 from TwitchChannelPointsMiner.classes.entities.Bet import Strategy, BetSettings, Condition, OutcomeKeys, FilterCondition, DelayMode
 from TwitchChannelPointsMiner.classes.entities.Streamer import Streamer, StreamerSettings
 import os
+import time
 import logging
 import threading
-from scanner import scanStreamers, scanUsername
+import webbrowser
+from scanner import scanStreamers, scanUsername, load_auto_update, save_auto_update, search_updates
 import pystray
 from PIL import Image
 import requests
@@ -44,19 +46,33 @@ ctypes.windll.shell32.SHGetFolderPathW(None, CSIDL_PERSONAL, None, SHGFP_TYPE_CU
 original_path = buf.value
 formatted_path = original_path.replace("\\", "\\\\")
 final_path = formatted_path + "\\\\TwitchMiner"
+os.chdir(final_path)
 
 the_program_to_hide2 = find_window_by_title(final_path)
 
 firstTime_to_hide = win32gui.GetForegroundWindow()
+
+auto_update = load_auto_update()
+version = "1.9.9"
+
+def auto_updater():
+    while True:
+        # Wait 24 hours (86.400 seconds)
+        time.sleep(86400)  
+
+        if load_auto_update():
+            update_thread = threading.Thread(target=search_updates, args=(load_auto_update(), version))
+            update_thread.start()
 
 def onBackground():
     icon_url = "https://8upload.com/image/652f72aea6996/icon-windowed.png"
     response = requests.get(icon_url)
     image = Image.open(BytesIO(response.content))
 
-    import webbrowser
+    global auto_update
 
     def after_click(icon, query):
+        global auto_update
         if str(query) == "Abrir Console":
             win32gui.ShowWindow(the_program_to_hide, win32con.SW_SHOW)
             win32gui.ShowWindow(the_program_to_hide2, win32con.SW_SHOW)
@@ -67,6 +83,12 @@ def onBackground():
             os.startfile("username.txt")
         elif str(query) == "Editar Streams":
             os.startfile("streamers.txt")
+        elif str(query) == "Atualizar automaticamente":
+            auto_update = not auto_update
+            save_auto_update(auto_update)
+        elif str(query) == "Buscar atualizações":
+            update_thread = threading.Thread(target=search_updates, args=(False, version))
+            update_thread.start()
         elif str(query) == "Ver Logs":
             os.startfile("logs\\" + scanUsername() + ".log")
         elif str(query) == "Ver Estatísticas":
@@ -75,13 +97,22 @@ def onBackground():
             icon.stop()
             os._exit(0)
 
-    icon = pystray.Icon("TM", image, "TwitchMiner", 
+    def is_auto_update_checked(item):
+        return auto_update
+
+    icon = pystray.Icon("TM", image, "TwitchMiner v" + version, 
         menu=pystray.Menu(
             pystray.MenuItem("Abrir Console", after_click),
             pystray.MenuItem("Esconder Console", after_click),
             pystray.MenuItem("Ver Estatísticas", after_click),
             pystray.MenuItem("Trocar Conta Twitch", after_click),
             pystray.MenuItem("Editar Streams", after_click),
+            pystray.MenuItem(
+                "Atualizar automaticamente", 
+                after_click, 
+                checked=is_auto_update_checked
+            ),
+            pystray.MenuItem("Buscar atualizações", after_click),
             pystray.MenuItem("Ver Logs", after_click),
             pystray.MenuItem("Sair", after_click)))
     icon.run()
@@ -195,11 +226,11 @@ def main():
 
 
 if __name__ == "__main__":
-    # Create a thread for the onBackground function
     onBackground_thread = threading.Thread(target=onBackground)
-    
-    # Start the thread for onBackground
     onBackground_thread.start()
+
+    auto_updater_thread = threading.Thread(target=auto_updater)
+    auto_updater_thread.start()
 
     # Run the main function in the main thread
     main()
