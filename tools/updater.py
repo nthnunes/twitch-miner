@@ -19,7 +19,7 @@ def dbConnection(username, password):
     client = MongoClient(CONNECTION_STRING)
     return client.get_database('twitch-miner')
 
-db = dbConnection("twitch-miner", "dwsHS78YuhKzCAXG")
+db = dbConnection("", "")
 coll = db.get_collection("updates")
 query = coll.find_one({'type': 'latest'})
 
