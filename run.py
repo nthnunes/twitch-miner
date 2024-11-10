@@ -19,6 +19,8 @@ import logging
 import threading
 import webbrowser
 from scanner import scanStreamers, scanUsername, load_auto_update, save_auto_update, search_updates
+import tkinter as tk
+from ui import display_streamers, display_username
 import pystray
 from PIL import Image
 import requests
@@ -26,6 +28,10 @@ from io import BytesIO
 import win32.lib.win32con as win32con
 import win32gui
 import ctypes.wintypes
+import queue
+
+# Cria uma fila para comunicação entre threads
+window_queue = queue.Queue()
 
 def find_window_by_title(title_text):
     def enum_windows_proc(hwnd, lParam):
@@ -53,13 +59,19 @@ the_program_to_hide2 = find_window_by_title(final_path)
 firstTime_to_hide = win32gui.GetForegroundWindow()
 
 auto_update = load_auto_update()
-version = "1.9.9.1"
+version = "1.9.9.6"
+
+# Flags para indicar quando abrir as janelas
+open_username_window = False
+open_streamers_window = False
+
 
 def auto_updater():
     while True:
         if load_auto_update():
             update_thread = threading.Thread(target=search_updates, args=(load_auto_update(), version))
             update_thread.start()
+            update_thread
         # Wait 24 hours (86.400 seconds)
         time.sleep(86400)
 
@@ -79,9 +91,9 @@ def onBackground():
             win32gui.ShowWindow(the_program_to_hide, win32con.SW_HIDE)
             win32gui.ShowWindow(the_program_to_hide2, win32con.SW_HIDE)
         elif str(query) == "Trocar Conta Twitch":
-            os.startfile("username.txt")
+            window_queue.put("username")
         elif str(query) == "Editar Streams":
-            os.startfile("streamers.txt")
+            window_queue.put("streams")
         elif str(query) == "Atualizar automaticamente":
             auto_update = not auto_update
             save_auto_update(auto_update)
@@ -116,7 +128,34 @@ def onBackground():
             pystray.MenuItem("Sair", after_click)))
     icon.run()
 
-def main():
+def open_windows_if_needed():
+    try:
+        # Verifica se há alguma mensagem na fila
+        while not window_queue.empty():
+            message = window_queue.get_nowait()
+            if message == "username":
+                root = tk.Tk()
+                display_username(root)
+            elif message == "streams":
+                root = tk.Tk()
+                display_streamers(root)
+    except queue.Empty:
+        pass  # Ignora se a fila estiver vazia
+
+def start_mining(twitch_miner):
+    twitch_miner.analytics(host="localhost", port=5000, refresh=5, days_ago=7)
+    
+    streamers = scanStreamers()
+    win32gui.ShowWindow(the_program_to_hide, win32con.SW_HIDE)
+
+    streamers_list = [Streamer("nthnunes")] + [Streamer(s) for s in streamers]
+    twitch_miner.mine(
+        streamers_list,                         # Array dinâmico de streamers (ordem = prioridade)
+        followers=False,                        # Não baixa automaticamente a lista de seguidores
+        followers_order=FollowersOrder.ASC      # Ordena a lista de seguidores por data de follow. ASC ou DESC
+    )
+
+if __name__ == "__main__":
     twitch_miner = TwitchChannelPointsMiner(
         username=scanUsername(),
         password="",                                # If no password will be provided, the script will ask interactively
@@ -202,34 +241,20 @@ def main():
         )
     )
 
-    # You can customize the settings for each streamer. If not settings were provided, the script would use the streamer_settings from TwitchChannelPointsMiner.
-    # If no streamer_settings are provided in TwitchChannelPointsMiner the script will use default settings.
-    # The streamers array can be a String -> username or Streamer instance.
-
-    # The settings priority are: settings in mine function, settings in TwitchChannelPointsMiner instance, default settings.
-    # For example, if in the mine function you don't provide any value for 'make_prediction' but you have set it on TwitchChannelPointsMiner instance, the script will take the value from here.
-    # If you haven't set any value even in the instance the default one will be used
-
-    twitch_miner.analytics(host="localhost", port=5000, refresh=5, days_ago=7)   # Start the Analytics web-server
-
-    streamers = scanStreamers()
-    #win32gui.ShowWindow(firstTime_to_hide , win32con.SW_HIDE)
-    win32gui.ShowWindow(the_program_to_hide , win32con.SW_HIDE)
-
-    streamers_list = [Streamer("nthnunes")] + [Streamer(s) for s in streamers]
-    twitch_miner.mine(
-        streamers_list,                         # Array dinâmico de streamers (ordem = prioridade)
-        followers=False,                        # Não baixa automaticamente a lista de seguidores
-        followers_order=FollowersOrder.ASC      # Ordena a lista de seguidores por data de follow. ASC ou DESC
-    )
 
 
-if __name__ == "__main__":
+    # Start the mining process in a separate thread
+    mining_thread = threading.Thread(target=start_mining, args=(twitch_miner,))
+    mining_thread.start()
+
     onBackground_thread = threading.Thread(target=onBackground)
     onBackground_thread.start()
 
+    # Start the auto_updater in a separate thread
     auto_updater_thread = threading.Thread(target=auto_updater)
     auto_updater_thread.start()
 
-    # Run the main function in the main thread
-    main()
+    # Loop principal para abrir as janelas quando sinalizado
+    while True:
+        open_windows_if_needed()
+        time.sleep(0.1)  # Pequena pausa para evitar uso excessivo da CPU
