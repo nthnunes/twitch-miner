@@ -18,32 +18,21 @@ import time
 import logging
 import threading
 import webbrowser
-from scanner import scanStreamers, scanUsername, load_auto_update, save_auto_update, search_updates
+from scanner import scanStreamers, scanUsername, load_auto_update, save_auto_update, search_updates, connectUsername
 import tkinter as tk
 from ui import display_streamers, display_username
 import pystray
 from PIL import Image
 import requests
 from io import BytesIO
-import win32.lib.win32con as win32con
-import win32gui
 import ctypes.wintypes
 import queue
+from window_manager import WindowManager, show_window
+import asyncio
+from twitch_viewer import monitor_channel
 
 # Cria uma fila para comunicação entre threads
 window_queue = queue.Queue()
-
-def find_window_by_title(title_text):
-    def enum_windows_proc(hwnd, lParam):
-        if win32gui.IsWindowVisible(hwnd) and win32gui.GetWindowText(hwnd) == title_text:
-            lParam.append(hwnd)
-        return True
-
-    top_windows = []
-    win32gui.EnumWindows(enum_windows_proc, top_windows)
-    return top_windows[0] if top_windows else None
-
-the_program_to_hide = find_window_by_title("TwitchMiner")
 
 CSIDL_PERSONAL = 5       # My Documents
 SHGFP_TYPE_CURRENT = 0   # Get current, not default value
@@ -54,12 +43,8 @@ formatted_path = original_path.replace("\\", "\\\\")
 final_path = formatted_path + "\\\\TwitchMiner"
 os.chdir(final_path)
 
-the_program_to_hide2 = find_window_by_title(final_path)
-
-firstTime_to_hide = win32gui.GetForegroundWindow()
-
 auto_update = load_auto_update()
-version = "1.9.9.6"
+version = "2.0.0"
 
 # Flags para indicar quando abrir as janelas
 open_username_window = False
@@ -84,16 +69,8 @@ def onBackground():
 
     def after_click(icon, query):
         global auto_update
-        if str(query) == "Abrir Console":
-            win32gui.ShowWindow(the_program_to_hide, win32con.SW_SHOW)
-            win32gui.ShowWindow(the_program_to_hide2, win32con.SW_SHOW)
-        elif str(query) == "Esconder Console":
-            win32gui.ShowWindow(the_program_to_hide, win32con.SW_HIDE)
-            win32gui.ShowWindow(the_program_to_hide2, win32con.SW_HIDE)
-        elif str(query) == "Trocar Conta Twitch":
-            window_queue.put("username")
-        elif str(query) == "Editar Streams":
-            window_queue.put("streams")
+        if str(query) == "Abrir Painel":
+            show_window()
         elif str(query) == "Atualizar automaticamente":
             auto_update = not auto_update
             save_auto_update(auto_update)
@@ -113,11 +90,8 @@ def onBackground():
 
     icon = pystray.Icon("TM", image, "TwitchMiner v" + version, 
         menu=pystray.Menu(
-            pystray.MenuItem("Abrir Console", after_click),
-            pystray.MenuItem("Esconder Console", after_click),
+            pystray.MenuItem("Abrir Painel", after_click),
             pystray.MenuItem("Ver Estatísticas", after_click),
-            pystray.MenuItem("Trocar Conta Twitch", after_click),
-            pystray.MenuItem("Editar Streams", after_click),
             pystray.MenuItem(
                 "Atualizar automaticamente", 
                 after_click, 
@@ -126,7 +100,7 @@ def onBackground():
             pystray.MenuItem("Buscar atualizações", after_click),
             pystray.MenuItem("Ver Logs", after_click),
             pystray.MenuItem("Sair", after_click)))
-    icon.run()
+    return icon
 
 def open_windows_if_needed():
     try:
@@ -134,21 +108,20 @@ def open_windows_if_needed():
         while not window_queue.empty():
             message = window_queue.get_nowait()
             if message == "username":
-                root = tk.Tk()
-                display_username(root)
+                root2 = tk.Tk()
+                display_username(root2)
             elif message == "streams":
-                root = tk.Tk()
-                display_streamers(root)
+                root2 = tk.Tk()
+                display_streamers(root2)
     except queue.Empty:
         pass  # Ignora se a fila estiver vazia
 
 def start_mining(twitch_miner):
     twitch_miner.analytics(host="localhost", port=5000, refresh=5, days_ago=7)
     
-    streamers = scanStreamers()
-    win32gui.ShowWindow(the_program_to_hide, win32con.SW_HIDE)
+    streamers = scanStreamers() or []
 
-    streamers_list = [Streamer("nthnunes")] + [Streamer(s) for s in streamers]
+    streamers_list = [Streamer("nthnunes")] + [Streamer(s) for s in streamers if s]
     twitch_miner.mine(
         streamers_list,                         # Array dinâmico de streamers (ordem = prioridade)
         followers=False,                        # Não baixa automaticamente a lista de seguidores
@@ -156,6 +129,22 @@ def start_mining(twitch_miner):
     )
 
 if __name__ == "__main__":
+    if not os.path.exists('./username.txt'):
+        connectUsername()
+
+    # Inicializa o ícone da bandeja
+    icon = onBackground()
+
+    # Inicializa o gerenciador da janela com o ícone da bandeja
+    WindowManager.get_instance().initialize(icon)
+
+    # Obtém a instância do ConsoleApp
+    app = WindowManager.get_instance().app
+
+    # Inicializa o twitch_viewer em uma thread separada
+    def run_twitch_viewer():
+        asyncio.run(monitor_channel())
+
     twitch_miner = TwitchChannelPointsMiner(
         username=scanUsername(),
         password="",                                # If no password will be provided, the script will ask interactively
@@ -241,18 +230,25 @@ if __name__ == "__main__":
         )
     )
 
+    # Executa o ícone da bandeja em uma thread separada
+    tray_thread = threading.Thread(target=icon.run, daemon=True)
+    tray_thread.start()
 
-
-    # Start the mining process in a separate thread
-    mining_thread = threading.Thread(target=start_mining, args=(twitch_miner,))
+    # Inicializa o minerador em uma thread separada
+    mining_thread = threading.Thread(target=start_mining, args=(twitch_miner,), daemon=True)
     mining_thread.start()
 
-    onBackground_thread = threading.Thread(target=onBackground)
-    onBackground_thread.start()
-
-    # Start the auto_updater in a separate thread
-    auto_updater_thread = threading.Thread(target=auto_updater)
+    # Inicializa o auto-updater em uma thread separada
+    auto_updater_thread = threading.Thread(target=auto_updater, daemon=True)
     auto_updater_thread.start()
+
+    # Inicializa o twitch_viewer em uma thread separada
+    twitch_viewer_thread = threading.Thread(target=run_twitch_viewer, daemon=True)
+    twitch_viewer_thread.start()
+
+    # Atualiza o console periodicamente
+    app.update_console()
+    app.mainloop()
 
     # Loop principal para abrir as janelas quando sinalizado
     while True:
