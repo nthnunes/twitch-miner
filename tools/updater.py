@@ -162,9 +162,16 @@ class UpdaterApp:
             time.sleep(1)
             
             # Passo 6: Iniciando o programa
-            miner_path = f"C:\\Users\\{os.getlogin()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\TwitchMiner.lnk"
+            CSIDL_PERSONAL = 5       # My Documents
+            SHGFP_TYPE_CURRENT = 0   # Get current, not default value
+            buf= ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+            ctypes.windll.shell32.SHGetFolderPathW(None, CSIDL_PERSONAL, None, SHGFP_TYPE_CURRENT, buf)
+            original_path = buf.value
+            formatted_path = original_path.replace("\\", "\\\\")
+            final_path = formatted_path + "\\\\TwitchMiner"
+            os.chdir(final_path)
             try:
-                os.startfile(miner_path)
+                os.startfile(final_path + "\\\\TwitchMiner.exe")
             except FileNotFoundError:
                 self.update_status("Erro: TwitchMiner.exe não foi encontrado.", 100)
                 time.sleep(3)
