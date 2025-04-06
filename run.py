@@ -44,7 +44,7 @@ final_path = formatted_path + "\\\\TwitchMiner"
 os.chdir(final_path)
 
 auto_update = load_auto_update()
-version = "2.0.0"
+version = "2.0.1"
 
 # Flags para indicar quando abrir as janelas
 open_username_window = False
@@ -71,8 +71,6 @@ def onBackground():
         global auto_update
         if str(query) == "Abrir Painel":
             show_window()
-        elif str(query) == "Ver Logs":
-            os.startfile("logs\\" + scanUsername() + ".log")
         elif str(query) == "Ver Estatísticas":
             webbrowser.open("http://localhost:5000")
         elif str(query) == "Sair":
@@ -83,7 +81,6 @@ def onBackground():
         menu=pystray.Menu(
             pystray.MenuItem("Abrir Painel", after_click),
             pystray.MenuItem("Ver Estatísticas", after_click),
-            pystray.MenuItem("Ver Logs", after_click),
             pystray.MenuItem("Sair", after_click)))
     return icon
 
