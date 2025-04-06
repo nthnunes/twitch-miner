@@ -7,11 +7,6 @@ import customtkinter as ctk
 from PIL import Image
 import os
 
-# Definição do diretório de ícones
-ICON_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons")
-# Cria o diretório de ícones se não existir
-os.makedirs(ICON_DIR, exist_ok=True)
-
 class ConsoleApp(ctk.CTk):
     def __init__(self, tray_icon=None):
         super().__init__()
@@ -74,19 +69,19 @@ class ConsoleApp(ctk.CTk):
         
         # Tenta carregar os ícones (se existirem)
         try:
-            console_path = os.path.join(ICON_DIR, "terminal.png") 
+            console_path = os.path.join("icons", "terminal.png") 
             if os.path.exists(console_path):
                 self.console_icon = ctk.CTkImage(Image.open(console_path), size=icon_size)
             
-            streams_path = os.path.join(ICON_DIR, "broadcast.png")
+            streams_path = os.path.join("icons", "broadcast.png")
             if os.path.exists(streams_path):
                 self.streams_icon = ctk.CTkImage(Image.open(streams_path), size=icon_size)
             
-            user_path = os.path.join(ICON_DIR, "card.png")
+            user_path = os.path.join("icons", "card.png")
             if os.path.exists(user_path):
                 self.user_icon = ctk.CTkImage(Image.open(user_path), size=icon_size)
                 
-            account_path = os.path.join(ICON_DIR, "user.png")
+            account_path = os.path.join("icons", "user.png")
             if os.path.exists(account_path):
                 self.account_icon = ctk.CTkImage(Image.open(account_path), size=icon_size)
         except Exception as e:
@@ -288,7 +283,7 @@ class ConsoleApp(ctk.CTk):
 
         # Container para manter o conteúdo
         content_frame = ctk.CTkFrame(frame, fg_color="transparent")
-        content_frame.pack(side=tk.LEFT, fill=tk.BOTH, padx=20, pady=20, anchor="nw")
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
         # Título
         title_label = ctk.CTkLabel(content_frame, text="Planos Disponíveis", font=("Arial", 14, "bold"))
@@ -296,7 +291,7 @@ class ConsoleApp(ctk.CTk):
         
         # Plano Free
         free_frame = ctk.CTkFrame(content_frame, corner_radius=10, border_width=1)
-        free_frame.pack(fill=tk.X, pady=(0, 15), padx=5)
+        free_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 15), padx=5)
         
         free_label = ctk.CTkLabel(free_frame, text="Plano Free (Atual)", font=("Arial", 14, "bold"))
         free_label.pack(anchor="w", padx=15, pady=(15, 0))
@@ -311,13 +306,10 @@ class ConsoleApp(ctk.CTk):
         for feature in free_features:
             feature_label = ctk.CTkLabel(free_frame, text=feature, font=("Arial", 11), justify=tk.LEFT)
             feature_label.pack(anchor="w", pady=2, padx=15)
-            
-        # Espaçamento final no frame (reduzido)
-        ctk.CTkLabel(free_frame, text="").pack(pady=2)
         
         # Plano Pro
         pro_frame = ctk.CTkFrame(content_frame, corner_radius=10, border_width=1)
-        pro_frame.pack(fill=tk.X, pady=(0, 15), padx=5)
+        pro_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 15), padx=5)
         
         pro_label = ctk.CTkLabel(pro_frame, text="Plano Pro", font=("Arial", 14, "bold"))
         pro_label.pack(anchor="w", padx=15, pady=(15, 0))
@@ -335,9 +327,6 @@ class ConsoleApp(ctk.CTk):
         for feature in pro_features:
             feature_label = ctk.CTkLabel(pro_frame, text=feature, font=("Arial", 11), justify=tk.LEFT)
             feature_label.pack(anchor="w", pady=2, padx=15)
-            
-        # Espaçamento final no frame (reduzido)
-        ctk.CTkLabel(pro_frame, text="").pack(pady=2)
         
         # Função para abrir o chat do Telegram
         def open_telegram_chat():
@@ -355,7 +344,7 @@ class ConsoleApp(ctk.CTk):
             height=50,
             command=open_telegram_chat
         )
-        subscribe_button.pack(pady=(10, 0))
+        subscribe_button.pack(fill=tk.X, pady=(10, 0), padx=5)
         
         return frame
     
