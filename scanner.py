@@ -8,35 +8,60 @@ from window_manager import show_window, hide_window
 import requests
 
 
-def createShortcut():
-    if not os.path.exists("C:\\Users\\" + os.getlogin() + "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\TwitchMiner.lnk"):
-        shortcut = pythoncom.CoCreateInstance (
-        shell.CLSID_ShellLink,
-        None,
-        pythoncom.CLSCTX_INPROC_SERVER,
-        shell.IID_IShellLink
-        )
-        shortcut.SetPath (sys.executable)
-        shortcut.SetDescription ("Python %s" % sys.version)
-        shortcut.SetIconLocation (sys.executable, 0)
-
-        persist_file = shortcut.QueryInterface (pythoncom.IID_IPersistFile)
-        persist_file.Save("C:\\Users\\" + os.getlogin() + "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\TwitchMiner.lnk", 0)
+def createShortcut(enable=True):
+    startup_path = f"C:\\Users\\{os.getlogin()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\TwitchMiner.lnk"
+    programs_path = f"C:\\Users\\{os.getlogin()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\TwitchMiner.lnk"
     
-    if not os.path.exists("C:\\Users\\" + os.getlogin() + "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\TwitchMiner.lnk"):
-        shortcut = pythoncom.CoCreateInstance (
-        shell.CLSID_ShellLink,
-        None,
-        pythoncom.CLSCTX_INPROC_SERVER,
-        shell.IID_IShellLink
-        )
-        shortcut.SetPath (sys.executable)
-        shortcut.SetDescription ("Python %s" % sys.version)
-        shortcut.SetIconLocation (sys.executable, 0)
+    # Se estiver desabilitando, remover o atalho da pasta Startup
+    if not enable and os.path.exists(startup_path):
+        try:
+            os.remove(startup_path)
+            return True
+        except:
+            return False
+            
+    # Se estiver habilitando, criar o atalho
+    if enable and not os.path.exists(startup_path):
+        try:
+            shortcut = pythoncom.CoCreateInstance (
+            shell.CLSID_ShellLink,
+            None,
+            pythoncom.CLSCTX_INPROC_SERVER,
+            shell.IID_IShellLink
+            )
+            shortcut.SetPath(sys.executable)
+            shortcut.SetDescription("Twitch Miner")
+            shortcut.SetIconLocation(sys.executable, 0)
 
-        persist_file = shortcut.QueryInterface (pythoncom.IID_IPersistFile)
-        persist_file.Save("C:\\Users\\" + os.getlogin() + "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\TwitchMiner.lnk", 0)
+            persist_file = shortcut.QueryInterface(pythoncom.IID_IPersistFile)
+            persist_file.Save(startup_path, 0)
+        except:
+            pass
+    
+    # Sempre criamos o atalho no menu programas se não existir
+    if not os.path.exists(programs_path):
+        try:
+            shortcut = pythoncom.CoCreateInstance (
+            shell.CLSID_ShellLink,
+            None,
+            pythoncom.CLSCTX_INPROC_SERVER,
+            shell.IID_IShellLink
+            )
+            shortcut.SetPath(sys.executable)
+            shortcut.SetDescription("Twitch Miner")
+            shortcut.SetIconLocation(sys.executable, 0)
 
+            persist_file = shortcut.QueryInterface(pythoncom.IID_IPersistFile)
+            persist_file.Save(programs_path, 0)
+        except:
+            pass
+    
+    return os.path.exists(startup_path)
+
+def check_autostart_enabled():
+    """Verifica se a inicialização automática está habilitada"""
+    startup_path = f"C:\\Users\\{os.getlogin()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\TwitchMiner.lnk"
+    return os.path.exists(startup_path)
 
 def connectUsername():
     root = tk.Tk()
@@ -111,29 +136,98 @@ def scanUsername():
 
 config_file = "config.dat"
 def load_auto_update():
-    if not os.path.exists(config_file):
-        with open(config_file, "w") as file:
-            file.write("True")
-        return True
-    else:
-        with open(config_file, "r") as file:
-            value = file.readline().strip()
-            return value == "True"
+    """Carrega a configuração de atualização automática do arquivo config.dat"""
+    try:
+        if not os.path.exists(config_file):
+            # Cria um novo arquivo com configurações padrão
+            with open(config_file, "w") as file:
+                file.write("True\nTrue\nTrue\n")  # [auto_update, autostart, dark_theme]
+            return True  # Atualizações automáticas habilitadas por padrão
+        else:
+            with open(config_file, "r") as file:
+                lines = file.readlines()
+                
+            # Se não houver linhas suficientes, assume verdadeiro
+            if not lines:
+                return True
+                
+            # Retorna o valor da primeira linha (atualizações automáticas)
+            return lines[0].strip() == "True"
+    except:
+        return True  # Em caso de erro, retorna o valor padrão
 
 def save_auto_update(value):
-    if os.path.exists(config_file):
-        with open(config_file, "r") as file:
-            lines = file.readlines()
-    else:
-        lines = []
+    """Salva a configuração de atualização automática no arquivo config.dat"""
+    try:
+        if os.path.exists(config_file):
+            with open(config_file, "r") as file:
+                lines = file.readlines()
+        else:
+            lines = []
 
-    if lines:
+        if not lines:
+            lines = ["True\n", "True\n"]  # Padrão: [auto_update, autostart]
+        
+        # Atualiza a linha para atualizações automáticas
         lines[0] = "True\n" if value else "False\n"
-    else:
-        lines.append("True\n" if value else "False\n")
+        
+        # Certifica-se de que há pelo menos duas linhas (para autostart)
+        if len(lines) < 2:
+            lines.append("True\n")
 
-    with open(config_file, "w") as file:
-        file.writelines(lines)
+        with open(config_file, "w") as file:
+            file.writelines(lines)
+        
+        return True
+    except:
+        return False
+
+def save_autostart(value):
+    """Salva a configuração de inicialização automática no arquivo config.dat"""
+    try:
+        if os.path.exists(config_file):
+            with open(config_file, "r") as file:
+                lines = file.readlines()
+        else:
+            lines = []
+            
+        if not lines:
+            lines = ["True\n", "True\n"]  # Padrão: [auto_update, autostart]
+            
+        # Certifica-se de que há pelo menos duas linhas
+        if len(lines) < 2:
+            lines.append("True\n")
+        
+        # Atualiza a linha para inicialização automática
+        lines[1] = "True\n" if value else "False\n"
+        
+        with open(config_file, "w") as file:
+            file.writelines(lines)
+        
+        # Cria ou remove o atalho na pasta Startup
+        createShortcut(value)
+        
+        return True
+    except:
+        return False
+
+def load_autostart():
+    """Carrega a configuração de inicialização automática do arquivo config.dat"""
+    try:
+        if not os.path.exists(config_file):
+            with open(config_file, "w") as file:
+                file.write("True\nTrue\n")
+            return True
+        else:
+            with open(config_file, "r") as file:
+                lines = file.readlines()
+                
+            if len(lines) < 2:
+                return True  # Valor padrão
+                
+            return lines[1].strip() == "True"
+    except:
+        return True  # Em caso de erro, retorna o valor padrão
 
 def show_update_dialog(description):
     root3 = tk.Tk()
@@ -154,19 +248,97 @@ def show_no_update_dialog():
     )
     root3.destroy()
 
-def search_updates(value, version):
-    response = requests.get("https://twitch-miner-api.vercel.app/check-update")
-    data = response.json()
+def search_updates(value=False, version="2.0.0", check_only=False):
+    """
+    Verifica se há atualizações disponíveis.
+    
+    Args:
+        value (bool): Se True, atualiza automaticamente
+        version (str): Versão atual do aplicativo
+        check_only (bool): Se True, apenas retorna as informações sem executar a atualização
+        
+    Returns:
+        dict: Informações sobre a atualização se check_only=True
+    """
+    try:
+        response = requests.get("https://twitch-miner-api.vercel.app/check-update")
+        data = response.json()
 
-    if version != data['version']:
-        if value:
-            os.startfile("updater.exe")
-            os._exit(0)
-        else:
-            user_response = show_update_dialog(f"Versão {data['version']} disponível\n\n{data['description']}")
-            if user_response:
+        update_info = {
+            "has_update": version != data['version'],
+            "current_version": version,
+            "latest_version": data['version'],
+            "description": data.get('description', ''),
+        }
+        
+        # Se estiver apenas verificando, retorna as informações
+        if check_only:
+            return update_info
+            
+        # Se houver atualização disponível
+        if update_info["has_update"]:
+            if value:  # Se atualizações automáticas estiverem ativadas
                 os.startfile("updater.exe")
                 os._exit(0)
-    else:
-        if value == False:
-            show_no_update_dialog()
+            else:
+                user_response = show_update_dialog(f"Versão {data['version']} disponível\n\n{data['description']}")
+                if user_response:
+                    os.startfile("updater.exe")
+                    os._exit(0)
+        else:
+            if value == False:
+                show_no_update_dialog()
+                
+        return update_info
+    except Exception as e:
+        # Em caso de erro, retorna informações básicas
+        return {
+            "has_update": False,
+            "current_version": version,
+            "latest_version": "Desconhecida",
+            "description": f"Erro ao verificar atualizações: {str(e)}",
+            "error": True
+        }
+
+def save_theme(is_dark_theme):
+    """Salva a preferência de tema (claro/escuro) no arquivo config.dat"""
+    try:
+        if os.path.exists(config_file):
+            with open(config_file, "r") as file:
+                lines = file.readlines()
+        else:
+            lines = []
+            
+        # Certificar-se de que há linhas suficientes [updates, autostart, theme]
+        while len(lines) < 3:
+            lines.append("True\n")
+        
+        # Atualiza a linha do tema (índice 2)
+        lines[2] = "True\n" if is_dark_theme else "False\n"
+        
+        with open(config_file, "w") as file:
+            file.writelines(lines)
+        
+        return True
+    except:
+        return False
+
+def load_theme():
+    """Carrega a preferência de tema do arquivo config.dat"""
+    try:
+        if not os.path.exists(config_file):
+            # Cria um novo arquivo com configurações padrão
+            with open(config_file, "w") as file:
+                file.write("True\nTrue\nTrue\n")  # [auto_update, autostart, dark_theme]
+            return True  # Tema escuro por padrão
+        else:
+            with open(config_file, "r") as file:
+                lines = file.readlines()
+                
+            # Se não houver linha para o tema, assume o tema escuro
+            if len(lines) < 3:
+                return True
+                
+            return lines[2].strip() == "True"
+    except:
+        return True  # Em caso de erro, retorna o tema escuro

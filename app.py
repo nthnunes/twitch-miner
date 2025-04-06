@@ -11,8 +11,17 @@ class ConsoleApp(ctk.CTk):
     def __init__(self, tray_icon=None):
         super().__init__()
         
-        # Configuração do tema
-        ctk.set_appearance_mode("dark")  # Modos: "dark", "light"
+        # Importa o módulo scanner para carregar as configurações
+        try:
+            sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+            import scanner
+            # Aplica o tema conforme a configuração salva
+            is_dark_theme = scanner.load_theme()
+            ctk.set_appearance_mode("dark" if is_dark_theme else "light")
+        except:
+            # Se ocorrer algum erro, usa o tema escuro como padrão
+            ctk.set_appearance_mode("dark")
+        
         ctk.set_default_color_theme("blue")  # Temas: "blue", "green", "dark-blue"
         
         self.title("TwitchMiner")
@@ -42,6 +51,8 @@ class ConsoleApp(ctk.CTk):
         self.streams_frame = self.create_streams_tab()
         self.user_frame = self.create_user_tab()
         self.account_frame = self.create_account_tab()
+        self.settings_frame = self.create_settings_tab()
+        self.about_frame = self.create_about_tab()
 
         # Mostra a aba do console por padrão
         self.show_tab("console")
@@ -63,6 +74,8 @@ class ConsoleApp(ctk.CTk):
         self.streams_icon = None 
         self.user_icon = None
         self.account_icon = None
+        self.about_icon = None
+        self.settings_icon = None
         
         # Tamanho dos ícones
         icon_size = (28, 28)
@@ -73,7 +86,7 @@ class ConsoleApp(ctk.CTk):
             if os.path.exists(console_path):
                 self.console_icon = ctk.CTkImage(Image.open(console_path), size=icon_size)
             
-            streams_path = os.path.join("icons", "broadcast.png")
+            streams_path = os.path.join("icons", "streams.png")
             if os.path.exists(streams_path):
                 self.streams_icon = ctk.CTkImage(Image.open(streams_path), size=icon_size)
             
@@ -84,6 +97,14 @@ class ConsoleApp(ctk.CTk):
             account_path = os.path.join("icons", "user.png")
             if os.path.exists(account_path):
                 self.account_icon = ctk.CTkImage(Image.open(account_path), size=icon_size)
+                
+            about_path = os.path.join("icons", "about.png")
+            if os.path.exists(about_path):
+                self.about_icon = ctk.CTkImage(Image.open(about_path), size=icon_size)
+                
+            settings_path = os.path.join("icons", "settings.png")
+            if os.path.exists(settings_path):
+                self.settings_icon = ctk.CTkImage(Image.open(settings_path), size=icon_size)
         except Exception as e:
             print(f"Erro ao carregar ícones: {e}")
 
@@ -158,6 +179,12 @@ class ConsoleApp(ctk.CTk):
 
         user_btn = make_button("Planos", lambda: self.show_tab("user"), self.user_icon)
         user_btn.pack(pady=8, fill=tk.X)
+        
+        settings_btn = make_button("Ajustes", lambda: self.show_tab("settings"), self.settings_icon)
+        settings_btn.pack(pady=8, fill=tk.X)
+        
+        about_btn = make_button("Sobre", lambda: self.show_tab("about"), self.about_icon)
+        about_btn.pack(pady=8, fill=tk.X)
 
     def create_console_tab(self):
         """Cria o conteúdo da aba do console."""
@@ -200,18 +227,22 @@ class ConsoleApp(ctk.CTk):
         list_frame = ctk.CTkFrame(flex_container, fg_color="transparent")
         list_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
         
+        # Definir cores baseadas no tema atual
+        bg_color = "#212121" if ctk.get_appearance_mode().lower() == "dark" else "#f0f0f0"
+        fg_color = "white" if ctk.get_appearance_mode().lower() == "dark" else "black"
+        
         # Listbox para exibir streamers (não existe em customtkinter, usaremos tkinter normal)
-        listbox = tk.Listbox(
+        self.streams_listbox = tk.Listbox(
             list_frame, 
             width=30, 
             height=15, 
-            bg=("#f0f0f0" if ctk.get_appearance_mode() == "light" else "#212121"), 
-            fg=("black" if ctk.get_appearance_mode() == "light" else "white"),
+            bg=bg_color, 
+            fg=fg_color,
             selectbackground="#9147ff",
             borderwidth=1,
             relief="solid"
         )
-        listbox.pack(fill=tk.BOTH, expand=True)
+        self.streams_listbox.pack(fill=tk.BOTH, expand=True)
 
         # Frame para os controles (lado direito)
         controls_frame = ctk.CTkFrame(flex_container, fg_color="transparent")
@@ -233,7 +264,7 @@ class ConsoleApp(ctk.CTk):
         add_button = ctk.CTkButton(
             controls_frame, 
             text="Adicionar streamer", 
-            command=lambda: self.add_streamer(listbox, entry),
+            command=lambda: self.add_streamer(self.streams_listbox, entry),
             corner_radius=8,
             fg_color=self.accent_color,
             hover_color=self.accent_hover,
@@ -245,7 +276,7 @@ class ConsoleApp(ctk.CTk):
         remove_button = ctk.CTkButton(
             controls_frame, 
             text="Remover selecionado", 
-            command=lambda: self.remove_streamer(listbox),
+            command=lambda: self.remove_streamer(self.streams_listbox),
             corner_radius=8,
             fg_color=self.neutral_color,
             hover_color=self.neutral_hover,
@@ -268,11 +299,11 @@ class ConsoleApp(ctk.CTk):
         restart_button.pack(fill=tk.X, pady=(0, 10), padx=5)
 
         # Vincular eventos de arrastar e soltar
-        listbox.bind("<Button-1>", lambda event: self.start_drag(event, listbox))
-        listbox.bind("<B1-Motion>", lambda event: self.on_drag(event, listbox))
+        self.streams_listbox.bind("<Button-1>", lambda event: self.start_drag(event, self.streams_listbox))
+        self.streams_listbox.bind("<B1-Motion>", lambda event: self.on_drag(event, self.streams_listbox))
 
         # Inicializa os streamers na Listbox
-        self.refresh_listbox(listbox)
+        self.refresh_listbox(self.streams_listbox)
 
         return frame
 
@@ -398,6 +429,433 @@ class ConsoleApp(ctk.CTk):
 
         return frame
 
+    def create_about_tab(self):
+        """Cria o conteúdo da aba de sobre."""
+        frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        # Container para manter o conteúdo
+        content_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+
+        # Título
+        title_label = ctk.CTkLabel(content_frame, text="Sobre o TwitchMiner", font=("Arial", 14, "bold"))
+        title_label.pack(pady=(0, 10), anchor="center")
+        
+        # Versão
+        version_label = ctk.CTkLabel(content_frame, text="Versão 2.0.0", font=("Arial", 14))
+        version_label.pack(pady=(0, 10), anchor="center")
+        
+        # Desenvolvedor
+        dev_label = ctk.CTkLabel(
+            content_frame, 
+            text="Desenvolvido por o tal do nunes", 
+            font=("Arial", 12)
+        )
+        dev_label.pack(pady=(0, 30), anchor="center")
+        
+        # Função para abrir links
+        def open_link(url):
+            import webbrowser
+            webbrowser.open(url)
+        
+        # Frame para os links (centralizado)
+        links_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        links_frame.pack(pady=(0, 20), anchor="center")
+        
+        # Link para o site
+        site_button = ctk.CTkButton(
+            links_frame,
+            text="Site Oficial",
+            font=("Arial", 12),
+            fg_color=self.accent_color,
+            hover_color=self.accent_hover,
+            corner_radius=8,
+            width=250,
+            command=lambda: open_link("https://twitch-miner-web.vercel.app/")
+        )
+        site_button.pack(pady=10)
+        
+        # Link para outras versões
+        versions_button = ctk.CTkButton(
+            links_frame,
+            text="Outras Versões",
+            font=("Arial", 12),
+            fg_color=self.neutral_color,
+            hover_color=self.neutral_hover,
+            text_color=("black", "white"),
+            corner_radius=8,
+            width=250,
+            command=lambda: open_link("https://twitch-miner-web.vercel.app/versions")
+        )
+        versions_button.pack(pady=10)
+        
+        # Frame para o botão de suporte (alinhado na parte inferior)
+        support_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        support_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=(0, 10))
+        
+        # Botão de suporte
+        support_button = ctk.CTkButton(
+            support_frame,
+            text="Falar com Suporte",
+            font=("Arial", 12, "bold"),
+            fg_color=self.accent_color,
+            hover_color=self.accent_hover,
+            corner_radius=8,
+            height=45,
+            command=lambda: open_link("https://t.me/nthnuness")
+        )
+        support_button.pack(pady=10, padx=20, side=tk.BOTTOM)
+        
+        return frame
+
+    def create_settings_tab(self):
+        """Cria o conteúdo da aba de configurações."""
+        frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        # Container para manter o conteúdo
+        content_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+
+        # Título
+        title_label = ctk.CTkLabel(content_frame, text="Configurações", font=("Arial", 14, "bold"))
+        title_label.pack(pady=(0, 20), anchor="w")
+        
+        # Frame para configurações de aparência
+        appearance_frame = ctk.CTkFrame(content_frame)
+        appearance_frame.pack(fill=tk.X, pady=(0, 15), padx=5)
+        
+        # Título da seção de aparência
+        appearance_title = ctk.CTkLabel(
+            appearance_frame, 
+            text="Aparência", 
+            font=("Arial", 14, "bold")
+        )
+        appearance_title.pack(anchor="w", padx=15, pady=(15, 10))
+        
+        # Container para o switch do tema
+        theme_container = ctk.CTkFrame(appearance_frame, fg_color="transparent")
+        theme_container.pack(fill=tk.X, padx=15, pady=10)
+        
+        # Label para o tema
+        theme_label = ctk.CTkLabel(
+            theme_container,
+            text="Tema Escuro",
+            font=("Arial", 12)
+        )
+        theme_label.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # Importa as funções do scanner
+        sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+        try:
+            import scanner
+        except ImportError:
+            # Em caso de erro, define métodos vazios
+            class DummyScanner:
+                @staticmethod
+                def load_auto_update():
+                    return True
+                
+                @staticmethod
+                def save_auto_update(value):
+                    return True
+                
+                @staticmethod
+                def check_autostart_enabled():
+                    return True
+                
+                @staticmethod
+                def load_autostart():
+                    return True
+                
+                @staticmethod
+                def save_autostart(value):
+                    return True
+                
+                @staticmethod
+                def save_theme(is_dark_theme):
+                    return True
+                    
+                @staticmethod
+                def load_theme():
+                    return True
+                
+                @staticmethod
+                def search_updates(value=False, version="2.0.0", check_only=False):
+                    return {
+                        "has_update": False,
+                        "current_version": "2.0.0",
+                        "latest_version": "2.0.0",
+                        "description": "",
+                        "error": False
+                    }
+            
+            scanner = DummyScanner
+        
+        # Função para alternar o tema
+        def toggle_theme():
+            # Obtém o estado atual do switch
+            is_dark_theme = theme_switch.get() == 1
+            
+            # Alterna o tema
+            ctk.set_appearance_mode("dark" if is_dark_theme else "light")
+            theme_label.configure(text="Tema Escuro" if is_dark_theme else "Tema Claro")
+            
+            # Salva a preferência
+            try:
+                scanner.save_theme(is_dark_theme)
+            except:
+                pass
+            
+            # Atualiza a cor de fundo da listbox na aba streams
+            self.update_listbox_colors()
+        
+        # Switch para alternar o tema
+        theme_switch = ctk.CTkSwitch(
+            theme_container,
+            text="",
+            command=toggle_theme,
+            button_color=self.accent_color,
+            button_hover_color=self.accent_hover,
+            progress_color=self.accent_color
+        )
+        
+        # Define o estado inicial do switch baseado no tema atual
+        if ctk.get_appearance_mode().lower() == "dark":
+            theme_switch.select()
+            theme_label.configure(text="Tema Escuro")
+        else:
+            theme_switch.deselect()
+            theme_label.configure(text="Tema Claro")
+            
+        theme_switch.pack(side=tk.RIGHT)
+        
+        # Frame para configurações do sistema
+        system_frame = ctk.CTkFrame(content_frame)
+        system_frame.pack(fill=tk.X, pady=(0, 15), padx=5)
+        
+        # Título da seção de sistema
+        system_title = ctk.CTkLabel(
+            system_frame, 
+            text="Sistema", 
+            font=("Arial", 14, "bold")
+        )
+        system_title.pack(anchor="w", padx=15, pady=(15, 10))
+        
+        # Container para o switch de atualizações automáticas
+        auto_update_container = ctk.CTkFrame(system_frame, fg_color="transparent")
+        auto_update_container.pack(fill=tk.X, padx=15, pady=10)
+        
+        # Label para atualizações automáticas
+        auto_update_label = ctk.CTkLabel(
+            auto_update_container,
+            text="Atualizações Automáticas",
+            font=("Arial", 12)
+        )
+        auto_update_label.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # Função para alternar atualizações automáticas
+        def toggle_auto_update():
+            try:
+                state = auto_update_switch.get()
+                scanner.save_auto_update(state == 1)
+            except:
+                pass
+        
+        # Switch para alternar atualizações automáticas
+        auto_update_switch = ctk.CTkSwitch(
+            auto_update_container,
+            text="",
+            command=toggle_auto_update,
+            button_color=self.accent_color,
+            button_hover_color=self.accent_hover,
+            progress_color=self.accent_color
+        )
+        
+        # Define o estado inicial do switch baseado na configuração
+        try:
+            if scanner.load_auto_update():
+                auto_update_switch.select()
+            else:
+                auto_update_switch.deselect()
+        except:
+            auto_update_switch.select()  # Padrão: habilitado
+            
+        auto_update_switch.pack(side=tk.RIGHT)
+        
+        # Container para o switch de inicialização automática
+        auto_start_container = ctk.CTkFrame(system_frame, fg_color="transparent")
+        auto_start_container.pack(fill=tk.X, padx=15, pady=10)
+        
+        # Label para inicialização automática
+        auto_start_label = ctk.CTkLabel(
+            auto_start_container,
+            text="Inicialização Automática",
+            font=("Arial", 12)
+        )
+        auto_start_label.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # Função para alternar inicialização automática
+        def toggle_auto_start():
+            try:
+                state = auto_start_switch.get()
+                scanner.save_autostart(state == 1)
+            except:
+                pass
+        
+        # Switch para alternar inicialização automática
+        auto_start_switch = ctk.CTkSwitch(
+            auto_start_container,
+            text="",
+            command=toggle_auto_start,
+            button_color=self.accent_color,
+            button_hover_color=self.accent_hover,
+            progress_color=self.accent_color
+        )
+        
+        # Define o estado inicial do switch baseado na configuração
+        try:
+            if scanner.load_autostart():
+                auto_start_switch.select()
+            else:
+                auto_start_switch.deselect()
+        except:
+            auto_start_switch.select()  # Padrão: habilitado
+            
+        auto_start_switch.pack(side=tk.RIGHT)
+        
+        # Frame para o resultado da busca de atualizações
+        update_result_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        update_result_frame.pack(fill=tk.X, pady=(5, 15), padx=5)
+        
+        # Frame horizontal para conter os dois labels lado a lado
+        update_text_frame = ctk.CTkFrame(update_result_frame, fg_color="transparent")
+        update_text_frame.pack(pady=(5, 0))
+        
+        # Label para mostrar o status da atualização
+        update_status_label = ctk.CTkLabel(
+            update_text_frame,
+            text="",
+            font=("Arial", 12),
+            justify="right"
+        )
+        update_status_label.pack(side=tk.LEFT, padx=(0, 5))
+        
+        # Label clicável para "Atualizar agora"
+        update_action_label = ctk.CTkLabel(
+            update_text_frame,
+            text="",
+            font=("Arial", 12, "bold"),
+            text_color=self.accent_color,
+            cursor="hand2",
+            justify="left"
+        )
+        update_action_label.pack(side=tk.LEFT)
+        
+        # Versão atual do aplicativo
+        VERSION = "2.0.0"
+        
+        # Função para buscar atualizações
+        def check_for_updates():
+            try:
+                # Altera o texto para "Verificando..."
+                update_status_label.configure(text="Verificando atualizações...")
+                update_action_label.configure(text="")
+                
+                # Atualiza a interface
+                self.update()
+                
+                # Busca por atualizações
+                result = scanner.search_updates(False, VERSION, True)
+                
+                # Verifica se houve erro
+                if result.get("error", False):
+                    update_status_label.configure(
+                        text=f"Erro ao verificar atualizações: {result.get('description', 'Erro desconhecido')}",
+                        text_color="red"
+                    )
+                    update_action_label.configure(text="")
+                    return
+                
+                # Se há atualização disponível
+                if result["has_update"]:
+                    # Configura o texto inicial
+                    update_status_label.configure(
+                        text=f"Versão {result['latest_version']} disponível.",
+                        text_color=("black", "white")
+                    )
+                    
+                    # Configura o texto de ação
+                    update_action_label.configure(text="Atualizar agora")
+                    
+                    # Adiciona evento de clique para iniciar a atualização
+                    def start_update(event):
+                        try:
+                            os.startfile("updater.exe")
+                            self.quit()  # Fecha o aplicativo após iniciar o atualizador
+                        except:
+                            update_status_label.configure(
+                                text="Erro ao iniciar o atualizador.",
+                                text_color="red"
+                            )
+                            update_action_label.configure(text="")
+                    
+                    # Adiciona o evento de clique ao label
+                    update_action_label.bind("<Button-1>", start_update)
+                else:
+                    update_status_label.configure(
+                        text=f"Não há atualizações disponíveis. Versão {result['latest_version']} é a mais recente.",
+                        text_color=("black", "white")
+                    )
+                    update_action_label.configure(text="")
+            except Exception as e:
+                update_status_label.configure(
+                    text=f"Erro ao verificar atualizações: {str(e)}",
+                    text_color="red"
+                )
+                update_action_label.configure(text="")
+        
+        # Botão para buscar atualizações
+        check_updates_button = ctk.CTkButton(
+            content_frame,
+            text="Buscar Atualizações",
+            font=("Arial", 12),
+            fg_color=self.accent_color,
+            hover_color=self.accent_hover,
+            corner_radius=8,
+            height=45,
+            command=check_for_updates
+        )
+        check_updates_button.pack(fill=tk.X, pady=(0, 5), padx=5)
+        
+        # Função para abrir a pasta do aplicativo
+        def open_app_folder():
+            try:
+                os.startfile(os.getcwd())
+            except:
+                import subprocess
+                try:
+                    subprocess.Popen(f'explorer "{os.getcwd()}"')
+                except:
+                    pass
+        
+        # Botão para abrir a pasta do aplicativo
+        open_folder_button = ctk.CTkButton(
+            content_frame,
+            text="Navegar nos arquivos do TwitchMiner",
+            font=("Arial", 12),
+            fg_color=self.neutral_color,
+            hover_color=self.neutral_hover,
+            text_color=("black", "white"),
+            corner_radius=8,
+            height=45,
+            command=open_app_folder
+        )
+        open_folder_button.pack(fill=tk.X, pady=(0, 0), padx=5)
+        
+        return frame
+
     def show_tab(self, tab_name):
         """Alterna entre as abas do console e dos streams."""
         # Esconde todas as abas primeiro
@@ -405,6 +863,8 @@ class ConsoleApp(ctk.CTk):
         self.streams_frame.pack_forget()
         self.user_frame.pack_forget()
         self.account_frame.pack_forget()
+        self.about_frame.pack_forget()
+        self.settings_frame.pack_forget()
         
         # Mostra a aba selecionada
         if tab_name == "console":
@@ -415,6 +875,10 @@ class ConsoleApp(ctk.CTk):
             self.user_frame.pack(fill=tk.BOTH, expand=True)
         elif tab_name == "account":
             self.account_frame.pack(fill=tk.BOTH, expand=True)
+        elif tab_name == "about":
+            self.about_frame.pack(fill=tk.BOTH, expand=True)
+        elif tab_name == "settings":
+            self.settings_frame.pack(fill=tk.BOTH, expand=True)
 
     def refresh_listbox(self, listbox):
         """Atualiza o Listbox com os streamers do arquivo e adiciona números das posições."""
@@ -510,6 +974,26 @@ class ConsoleApp(ctk.CTk):
         else:
             tk.messagebox.showwarning("Erro", "O nome de usuário não pode estar vazio.")
 
+    def update_listbox_colors(self):
+        """Atualiza as cores da listbox de streams conforme o tema atual"""
+        try:
+            # Verifica se a listbox foi criada
+            if hasattr(self, 'streams_listbox'):
+                # Define cores apropriadas baseadas no tema atual
+                if ctk.get_appearance_mode().lower() == "dark":
+                    self.streams_listbox.config(
+                        bg="#212121",
+                        fg="white",
+                        selectbackground="#9147ff"
+                    )
+                else:
+                    self.streams_listbox.config(
+                        bg="#f0f0f0",
+                        fg="black",
+                        selectbackground="#9147ff"
+                    )
+        except:
+            pass
 
 if __name__ == "__main__":
     app = ConsoleApp()
