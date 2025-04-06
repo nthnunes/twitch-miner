@@ -19,3 +19,4 @@ pyinstaller
 customtkinter
 CTkMessagebox
 customtkinter-tools
+flask
