@@ -443,7 +443,7 @@ class ConsoleApp(ctk.CTk):
         title_label.pack(pady=(0, 10), anchor="center")
         
         # Versão
-        version_label = ctk.CTkLabel(content_frame, text="Versão 2.0.1", font=("Arial", 14))
+        version_label = ctk.CTkLabel(content_frame, text="Versão 2.0.2", font=("Arial", 14))
         version_label.pack(pady=(0, 10), anchor="center")
         
         # Desenvolvedor
@@ -582,11 +582,11 @@ class ConsoleApp(ctk.CTk):
                     return True
                 
                 @staticmethod
-                def search_updates(value=False, version="2.0.1", check_only=False):
+                def search_updates(value=False, version="2.0.2", check_only=False):
                     return {
                         "has_update": False,
-                        "current_version": "2.0.1",
-                        "latest_version": "2.0.1",
+                        "current_version": "2.0.2",
+                        "latest_version": "2.0.2",
                         "description": "",
                         "error": False
                     }
@@ -754,7 +754,7 @@ class ConsoleApp(ctk.CTk):
         update_action_label.pack(side=tk.LEFT)
         
         # Versão atual do aplicativo
-        VERSION = "2.0.1"
+        VERSION = "2.0.2"
         
         # Função para buscar atualizações
         def check_for_updates():
@@ -793,7 +793,7 @@ class ConsoleApp(ctk.CTk):
                     def start_update(event):
                         try:
                             os.startfile("updater.exe")
-                            self.quit()  # Fecha o aplicativo após iniciar o atualizador
+                            os._exit(0)
                         except:
                             update_status_label.configure(
                                 text="Erro ao iniciar o atualizador.",
