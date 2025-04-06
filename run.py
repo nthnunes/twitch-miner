@@ -18,7 +18,7 @@ import time
 import logging
 import threading
 import webbrowser
-from scanner import scanStreamers, scanUsername, load_auto_update, save_auto_update, search_updates, connectUsername
+from scanner import scanStreamers, scanUsername, load_auto_update, save_auto_update, search_updates, connectUsername, createShortcut
 import tkinter as tk
 from ui import display_streamers, display_username
 import pystray
@@ -131,6 +131,7 @@ def start_mining(twitch_miner):
 if __name__ == "__main__":
     if not os.path.exists('./username.txt'):
         connectUsername()
+        createShortcut()
 
     # Inicializa o ícone da bandeja
     icon = onBackground()
