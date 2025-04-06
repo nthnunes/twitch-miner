@@ -793,7 +793,7 @@ class ConsoleApp(ctk.CTk):
                     def start_update(event):
                         try:
                             os.startfile("updater.exe")
-                            self.quit()  # Fecha o aplicativo após iniciar o atualizador
+                            os._exit(0)
                         except:
                             update_status_label.configure(
                                 text="Erro ao iniciar o atualizador.",
