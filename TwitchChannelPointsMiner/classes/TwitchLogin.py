@@ -22,6 +22,8 @@ from TwitchChannelPointsMiner.constants import CLIENT_ID, GQLOperations, USER_AG
 from datetime import datetime, timedelta, timezone
 from time import sleep
 
+from window_manager import show_window
+
 logger = logging.getLogger(__name__)
 
 """def interceptor(request) -> str:
@@ -120,6 +122,7 @@ class TwitchLogin(object):
                 logger.info(
                     f"O código expira em {int(login_response_json['expires_in'] / 60)} minutos!"
                 )
+                show_window()
                 # twofa = input("2FA token: ")
                 # webbrowser.open_new_tab("https://www.twitch.tv/activate")
 

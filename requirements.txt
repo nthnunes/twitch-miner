@@ -16,3 +16,6 @@ pywin32
 pypiwin32
 pystray
 pyinstaller
+customtkinter
+CTkMessagebox
+customtkinter-tools

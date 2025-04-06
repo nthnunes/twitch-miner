@@ -3,20 +3,43 @@ from tkinter import messagebox
 from tkinter.scrolledtext import ScrolledText
 import queue
 import sys
+import customtkinter as ctk
+from PIL import Image
+import os
 
-class ConsoleApp(tk.Tk):
+# Definição do diretório de ícones
+ICON_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons")
+# Cria o diretório de ícones se não existir
+os.makedirs(ICON_DIR, exist_ok=True)
+
+class ConsoleApp(ctk.CTk):
     def __init__(self, tray_icon=None):
         super().__init__()
+        
+        # Configuração do tema
+        ctk.set_appearance_mode("dark")  # Modos: "dark", "light"
+        ctk.set_default_color_theme("blue")  # Temas: "blue", "green", "dark-blue"
+        
         self.title("TwitchMiner")
         self.geometry("800x600")
+        self.minsize(800, 600)
 
+        # Configurar as cores padrão
+        self.accent_color = "#9147ff"  # Roxo da Twitch
+        self.accent_hover = "#7a30f3"  # Roxo mais escuro para hover
+        self.neutral_color = ("#e0e0e0", "#3a3a3a")  # Cor neutra para botões secundários
+        self.neutral_hover = ("#cacaca", "#4e4e4e")  # Cor hover para botões secundários
+        
         self.tray_icon = tray_icon
+
+        # Carregar ícones
+        self.load_icons()
 
         # Barra lateral
         self.create_sidebar()
 
         # Frame principal para as abas
-        self.main_frame = tk.Frame(self)
+        self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.main_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
         # Criação das abas
@@ -38,6 +61,37 @@ class ConsoleApp(tk.Tk):
         # Intercepta o evento de fechamento
         self.protocol("WM_DELETE_WINDOW", self.hide_window)
 
+    def load_icons(self):
+        """Carrega os ícones para a aplicação ou usa ícones padrão."""
+        # Ícones a serem usados, inicializados como None
+        self.console_icon = None
+        self.streams_icon = None 
+        self.user_icon = None
+        self.account_icon = None
+        
+        # Tamanho dos ícones
+        icon_size = (28, 28)
+        
+        # Tenta carregar os ícones (se existirem)
+        try:
+            console_path = os.path.join(ICON_DIR, "terminal.png") 
+            if os.path.exists(console_path):
+                self.console_icon = ctk.CTkImage(Image.open(console_path), size=icon_size)
+            
+            streams_path = os.path.join(ICON_DIR, "broadcast.png")
+            if os.path.exists(streams_path):
+                self.streams_icon = ctk.CTkImage(Image.open(streams_path), size=icon_size)
+            
+            user_path = os.path.join(ICON_DIR, "card.png")
+            if os.path.exists(user_path):
+                self.user_icon = ctk.CTkImage(Image.open(user_path), size=icon_size)
+                
+            account_path = os.path.join(ICON_DIR, "user.png")
+            if os.path.exists(account_path):
+                self.account_icon = ctk.CTkImage(Image.open(account_path), size=icon_size)
+        except Exception as e:
+            print(f"Erro ao carregar ícones: {e}")
+
     def create_console_redirect(self):
         sys.stdout = self
         sys.stderr = self
@@ -52,9 +106,9 @@ class ConsoleApp(tk.Tk):
         while not self.queue.empty():
             try:
                 message = self.queue.get_nowait()
-                self.console_output.config(state=tk.NORMAL)
+                self.console_output.configure(state=tk.NORMAL)
                 self.console_output.insert(tk.END, message)
-                self.console_output.config(state=tk.DISABLED)
+                self.console_output.configure(state=tk.DISABLED)
                 self.console_output.see(tk.END)  # Rolagem automática
             except queue.Empty:
                 break
@@ -70,98 +124,153 @@ class ConsoleApp(tk.Tk):
 
     def create_sidebar(self):
         """Cria a barra lateral com botões de ícones."""
-        sidebar = tk.Frame(self, width=80, bg="#f0f0f0")
+        sidebar = ctk.CTkFrame(self, width=80, fg_color=("#f2f2f2", "#171717"))
         sidebar.pack(side=tk.LEFT, fill=tk.Y)
         
+        # Container para centralizar os botões verticalmente
+        button_container = ctk.CTkFrame(sidebar, fg_color="transparent")
+        button_container.pack(expand=True, fill=tk.BOTH, padx=5, pady=20)
+        
         # Função para criar botões com ou sem ícones
-        def make_button(text, command, icon_path=None):
-            if icon_path:
-                try:
-                    # Tenta carregar o ícone
-                    icon = tk.PhotoImage(file=icon_path)
-                    icon = icon.subsample(16, 16)  # Redimensiona
-                    button = tk.Button(
-                        sidebar, text=text, image=icon, compound=tk.TOP,
-                        command=command, bg="#f0f0f0", relief=tk.FLAT, 
-                        width=70, height=60
-                    )
-                    # Guarda a referência da imagem no botão
-                    button.icon = icon
-                except Exception as e:
-                    print(f"Erro ao carregar ícone {icon_path}: {e}")
-                    # Cria botão sem ícone em caso de falha
-                    button = tk.Button(
-                        sidebar, text=text, command=command,
-                        bg="#f0f0f0", relief=tk.FLAT, width=10, height=2
-                    )
-            else:
-                # Cria botão sem ícone
-                button = tk.Button(
-                    sidebar, text=text, command=command,
-                    bg="#f0f0f0", relief=tk.FLAT, width=10, height=2
-                )
+        def make_button(text, command, icon_image=None):
+            button = ctk.CTkButton(
+                button_container, 
+                text=text, 
+                image=icon_image,
+                command=command,
+                width=70, 
+                height=70,
+                corner_radius=8,
+                hover_color=("#dddddd", "#2d2d2d"),
+                fg_color="transparent",  # Sem cor de fundo
+                compound="top",  # Texto abaixo do ícone
+                border_width=0,  # Sem borda
+                text_color=("black", "white")  # Cor do texto adaptável ao tema
+            )
             
             return button
         
         # Criando os botões
-        console_btn = make_button("Console", lambda: self.show_tab("console"), "icons/terminal.png")
-        console_btn.pack(padx=5, pady=5, fill=tk.X)
+        console_btn = make_button("Console", lambda: self.show_tab("console"), self.console_icon)
+        console_btn.pack(pady=8, fill=tk.X)
         
-        streams_btn = make_button("Streams", lambda: self.show_tab("streams"), "icons/streams.png")
-        streams_btn.pack(padx=5, pady=5, fill=tk.X)
+        streams_btn = make_button("Streams", lambda: self.show_tab("streams"), self.streams_icon)
+        streams_btn.pack(pady=8, fill=tk.X)
         
         # Botão de conta com destaque
-        account_btn = make_button("Conta", lambda: self.show_tab("account"), "icons/user.png")
-        account_btn.pack(padx=5, pady=5, fill=tk.X)
+        account_btn = make_button("Conta", lambda: self.show_tab("account"), self.account_icon)
+        account_btn.pack(pady=8, fill=tk.X)
 
-        user_btn = make_button("Planos", lambda: self.show_tab("user"), "icons/card.png")
-        user_btn.pack(padx=5, pady=5, fill=tk.X)
+        user_btn = make_button("Planos", lambda: self.show_tab("user"), self.user_icon)
+        user_btn.pack(pady=8, fill=tk.X)
 
     def create_console_tab(self):
         """Cria o conteúdo da aba do console."""
-        frame = tk.Frame(self.main_frame)
+        frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         frame.pack(fill=tk.BOTH, expand=True)
 
-        self.console_output = ScrolledText(
-            frame, wrap=tk.WORD, state=tk.DISABLED, font=("Segoe UI Emoji", 10)
+        # Use a customtkinter textbox with a scrollbar
+        self.console_output = ctk.CTkTextbox(
+            frame, 
+            wrap="word", 
+            state=tk.DISABLED, 
+            font=("Segoe UI", 12),
+            text_color=("black", "white")
         )
-        self.console_output.pack(fill=tk.BOTH, expand=True)
+        self.console_output.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         return frame
 
     def create_streams_tab(self):
         """Cria o conteúdo da aba de streamers."""
-        frame = tk.Frame(self.main_frame)
-        frame.pack(padx=50, pady=50)
+        frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        # Container para manter o conteúdo 
+        content_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        content_frame.pack(side=tk.LEFT, fill=tk.BOTH, padx=20, pady=20, anchor="nw")
 
         # Título e instruções
-        title_label = tk.Label(frame, text="Ordem de prioridade:", font=("Arial", 12, "bold"))
-        title_label.grid(row=0, column=0, columnspan=3, pady=(0, 1), sticky="w")
+        title_label = ctk.CTkLabel(content_frame, text="Ordem de prioridade:", font=("Arial", 14, "bold"))
+        title_label.pack(pady=(0, 10), anchor="w")
 
-        instruction_label = tk.Label(frame, text="Segure e arraste para alterar as posições da lista.", font=("Arial", 8))
-        instruction_label.grid(row=1, column=0, columnspan=3, pady=(0, 10), sticky="w")
+        instruction_label = ctk.CTkLabel(content_frame, text="Segure e arraste para alterar as posições da lista.", font=("Arial", 12))
+        instruction_label.pack(pady=(0, 10), anchor="w")
 
-        # Listbox para exibir streamers
-        listbox = tk.Listbox(frame, width=40, height=15)
-        listbox.grid(row=2, column=0, rowspan=6, padx=(0, 10), pady=5)
+        # Container flex para a lista e controles
+        flex_container = ctk.CTkFrame(content_frame, fg_color="transparent")
+        flex_container.pack(fill=tk.BOTH, expand=True)
+
+        # Frame para a listbox (lado esquerdo)
+        list_frame = ctk.CTkFrame(flex_container, fg_color="transparent")
+        list_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
+        
+        # Listbox para exibir streamers (não existe em customtkinter, usaremos tkinter normal)
+        listbox = tk.Listbox(
+            list_frame, 
+            width=30, 
+            height=15, 
+            bg=("#f0f0f0" if ctk.get_appearance_mode() == "light" else "#212121"), 
+            fg=("black" if ctk.get_appearance_mode() == "light" else "white"),
+            selectbackground="#9147ff",
+            borderwidth=1,
+            relief="solid"
+        )
+        listbox.pack(fill=tk.BOTH, expand=True)
+
+        # Frame para os controles (lado direito)
+        controls_frame = ctk.CTkFrame(flex_container, fg_color="transparent")
+        controls_frame.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 0))
+
+        # Container para entrada de texto
+        add_frame = ctk.CTkFrame(controls_frame, fg_color="transparent")
+        add_frame.pack(fill=tk.X, pady=(0, 10))
 
         # Label para o prefixo do Twitch
-        twitch_label = tk.Label(frame, text="twitch.tv/", font=("Arial", 10))
-        twitch_label.grid(row=2, column=1, sticky="e")
+        twitch_label = ctk.CTkLabel(add_frame, text="twitch.tv/", font=("Arial", 12))
+        twitch_label.pack(side=tk.LEFT, padx=(5, 5))
 
         # Campo de entrada para adicionar streamer
-        entry = tk.Entry(frame, width=25)
-        entry.grid(row=2, column=2, pady=(5, 0), sticky="w")
+        entry = ctk.CTkEntry(add_frame, width=150, font=("Arial", 12))
+        entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
 
-        # Botões de funcionalidade
-        add_button = tk.Button(frame, text="Adicionar streamer", command=lambda: self.add_streamer(listbox, entry))
-        add_button.grid(row=3, column=1, columnspan=2, pady=(0, 70), sticky="ew")
+        # Botão para adicionar streamer
+        add_button = ctk.CTkButton(
+            controls_frame, 
+            text="Adicionar streamer", 
+            command=lambda: self.add_streamer(listbox, entry),
+            corner_radius=8,
+            fg_color=self.accent_color,
+            hover_color=self.accent_hover,
+            font=("Arial", 12)
+        )
+        add_button.pack(fill=tk.X, pady=(0, 10), padx=5)
 
-        remove_button = tk.Button(frame, text="Remover selecionado", command=lambda: self.remove_streamer(listbox))
-        remove_button.grid(row=4, column=1, columnspan=2, pady=5, sticky="ew")
+        # Botão para remover streamer
+        remove_button = ctk.CTkButton(
+            controls_frame, 
+            text="Remover selecionado", 
+            command=lambda: self.remove_streamer(listbox),
+            corner_radius=8,
+            fg_color=self.neutral_color,
+            hover_color=self.neutral_hover,
+            text_color=("black", "white"),
+            font=("Arial", 12)
+        )
+        remove_button.pack(fill=tk.X, pady=(0, 10), padx=5)
 
-        restart_button = tk.Button(frame, text="Aplicar alterações", command=lambda: self.restart_bot())
-        restart_button.grid(row=5, column=1, columnspan=2, pady=5, sticky="ew")
+        # Botão para aplicar alterações
+        restart_button = ctk.CTkButton(
+            controls_frame, 
+            text="Aplicar alterações", 
+            command=lambda: self.restart_bot(),
+            corner_radius=8,
+            fg_color=self.neutral_color,
+            hover_color=self.neutral_hover,
+            text_color=("black", "white"),
+            font=("Arial", 12)
+        )
+        restart_button.pack(fill=tk.X, pady=(0, 10), padx=5)
 
         # Vincular eventos de arrastar e soltar
         listbox.bind("<Button-1>", lambda event: self.start_drag(event, listbox))
@@ -174,26 +283,23 @@ class ConsoleApp(tk.Tk):
 
     def create_user_tab(self):
         """Cria o conteúdo da aba de planos."""
-        frame = tk.Frame(self.main_frame)
+        frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         frame.pack(fill=tk.BOTH, expand=True)
 
-        # Container para todo o conteúdo
-        content_frame = tk.Frame(frame)
-        content_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        # Container para manter o conteúdo
+        content_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        content_frame.pack(side=tk.LEFT, fill=tk.BOTH, padx=20, pady=20, anchor="nw")
 
         # Título
-        title_label = tk.Label(content_frame, text="Planos Disponíveis", font=("Arial", 18, "bold"))
-        title_label.pack(pady=(0, 20))
+        title_label = ctk.CTkLabel(content_frame, text="Planos Disponíveis", font=("Arial", 14, "bold"))
+        title_label.pack(pady=(0, 10), anchor="w")
         
         # Plano Free
-        free_frame = tk.Frame(content_frame, relief=tk.RIDGE, bd=2, padx=15, pady=15)
-        free_frame.pack(fill=tk.X, pady=(0, 15))
+        free_frame = ctk.CTkFrame(content_frame, corner_radius=10, border_width=1)
+        free_frame.pack(fill=tk.X, pady=(0, 15), padx=5)
         
-        free_label = tk.Label(free_frame, text="Plano Free (Atual)", font=("Arial", 14, "bold"))
-        free_label.pack(anchor="w")
-        
-        free_status = tk.Label(free_frame, text="✓ Ativo", font=("Arial", 12), fg="green")
-        free_status.pack(anchor="w", pady=(5, 10))
+        free_label = ctk.CTkLabel(free_frame, text="Plano Free (Atual)", font=("Arial", 14, "bold"))
+        free_label.pack(anchor="w", padx=15, pady=(15, 0))
         
         free_features = [
             "✓ Mineração automática de pontos",
@@ -203,30 +309,35 @@ class ConsoleApp(tk.Tk):
         ]
         
         for feature in free_features:
-            feature_label = tk.Label(free_frame, text=feature, font=("Arial", 11), justify=tk.LEFT)
-            feature_label.pack(anchor="w", pady=2)
+            feature_label = ctk.CTkLabel(free_frame, text=feature, font=("Arial", 11), justify=tk.LEFT)
+            feature_label.pack(anchor="w", pady=2, padx=15)
+            
+        # Espaçamento final no frame (reduzido)
+        ctk.CTkLabel(free_frame, text="").pack(pady=2)
         
         # Plano Pro
-        pro_frame = tk.Frame(content_frame, relief=tk.RIDGE, bd=2, bg="#f5f5f5", padx=15, pady=15)
-        pro_frame.pack(fill=tk.X, pady=(0, 15))
+        pro_frame = ctk.CTkFrame(content_frame, corner_radius=10, border_width=1)
+        pro_frame.pack(fill=tk.X, pady=(0, 15), padx=5)
         
-        pro_label = tk.Label(pro_frame, text="Plano Pro", font=("Arial", 14, "bold"), bg="#f5f5f5")
-        pro_label.pack(anchor="w")
+        pro_label = ctk.CTkLabel(pro_frame, text="Plano Pro", font=("Arial", 14, "bold"))
+        pro_label.pack(anchor="w", padx=15, pady=(15, 0))
         
-        price_label = tk.Label(pro_frame, text="R$ 10,00 / mês", font=("Arial", 12, "bold"), fg="#0066cc", bg="#f5f5f5")
-        price_label.pack(anchor="w", pady=(5, 10))
+        price_label = ctk.CTkLabel(pro_frame, text="R$ 10,00 / mês", font=("Arial", 12, "bold"), text_color="#9147ff")
+        price_label.pack(anchor="w", pady=(5, 10), padx=15)
         
         pro_features = [
             "✓ Mineração em nuvem 24/7",
             "✓ Não precisa manter o PC ligado",
             "✓ Baixo consumo de CPU",
-            "✓ Suporte prioritário",
-            "✓ Relatórios detalhados de ganhos"
+            "✓ Suporte prioritário"
         ]
         
         for feature in pro_features:
-            feature_label = tk.Label(pro_frame, text=feature, font=("Arial", 11), justify=tk.LEFT, bg="#f5f5f5")
-            feature_label.pack(anchor="w", pady=2)
+            feature_label = ctk.CTkLabel(pro_frame, text=feature, font=("Arial", 11), justify=tk.LEFT)
+            feature_label.pack(anchor="w", pady=2, padx=15)
+            
+        # Espaçamento final no frame (reduzido)
+        ctk.CTkLabel(pro_frame, text="").pack(pady=2)
         
         # Função para abrir o chat do Telegram
         def open_telegram_chat():
@@ -234,17 +345,15 @@ class ConsoleApp(tk.Tk):
             webbrowser.open("https://t.me/nthnuness")
         
         # Botão para assinar o plano Pro
-        subscribe_button = tk.Button(
+        subscribe_button = ctk.CTkButton(
             content_frame,
             text="Assinar Plano Pro",
             font=("Arial", 12, "bold"),
-            bg="#0066cc",
-            fg="white",
-            padx=15,
-            pady=15,
-            cursor="hand2",
-            command=open_telegram_chat,
-            height=2
+            fg_color=self.accent_color,
+            hover_color=self.accent_hover,
+            corner_radius=8,
+            height=50,
+            command=open_telegram_chat
         )
         subscribe_button.pack(pady=(10, 0))
         
@@ -252,38 +361,41 @@ class ConsoleApp(tk.Tk):
     
     def create_account_tab(self):
         """Cria o conteúdo da aba de conta Twitch."""
-        frame = tk.Frame(self.main_frame)
+        frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         frame.pack(fill=tk.BOTH, expand=True)
 
         # Container para manter o conteúdo alinhado à esquerda
-        content_frame = tk.Frame(frame)
+        content_frame = ctk.CTkFrame(frame, fg_color="transparent")
         content_frame.pack(side=tk.LEFT, fill=tk.BOTH, padx=20, pady=20, anchor="nw")
 
         # Rótulo para exibir o nome atual
-        title_label = tk.Label(content_frame, text="Alterar conta Twitch", font=("Arial", 14, "bold"))
+        title_label = ctk.CTkLabel(content_frame, text="Alterar conta Twitch", font=("Arial", 14, "bold"))
         title_label.pack(pady=(0, 10), anchor="w")
 
         # Campo para entrada do nome de usuário
-        username_label = tk.Label(content_frame, text="Nome de usuário atual:", font=("Arial", 12))
-        username_label.pack(pady=(5, 5), anchor="w")
+        username_label = ctk.CTkLabel(content_frame, text="Nome de usuário atual:", font=("Arial", 12))
+        username_label.pack(pady=(5, 10), anchor="w")
 
         # Exibe o nome atual
         current_username = self.load_username()
-        username_entry = tk.Entry(content_frame, width=30, font=("Arial", 12))
+        username_entry = ctk.CTkEntry(content_frame, width=300, font=("Arial", 12))
         username_entry.pack(pady=(5, 10), anchor="w")
         username_entry.insert(0, current_username)
 
         # Botão para salvar o novo nome de usuário
-        change_button = tk.Button(
+        change_button = ctk.CTkButton(
             content_frame,
             text="Alterar conta Twitch",
             font=("Arial", 12),
             command=lambda: self.change_username(username_entry.get()),
+            corner_radius=8,
+            fg_color=self.accent_color,
+            hover_color=self.accent_hover
         )
         change_button.pack(pady=(10, 10), anchor="w")
 
         # Texto de observação
-        obs_label = tk.Label(
+        obs_label = ctk.CTkLabel(
             content_frame,
             text=(
                 "Observação: Ao alterar seu nome de usuário na Twitch, o bot será reiniciado, "

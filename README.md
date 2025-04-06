@@ -1,6 +1,79 @@
 # TwitchMiner
 
-TwitchMiner é um bot que automatiza a mineração de pontos em transmissões ao vivo na plataforma Twitch. Ele executa em segundo plano no sistema Windows e inicia automaticamente junto com o computador.
+Um bot automatizado para ganhar pontos do canal em streams da Twitch.
+
+## Recursos Principais
+
+- Mineração automática de pontos de canais
+- Priorização de streamers favoritos
+- Controle através de uma interface gráfica moderna
+- Execução em segundo plano
+
+## Nova Interface Modernizada
+
+A interface do aplicativo foi atualizada usando CustomTkinter para proporcionar uma experiência visual mais moderna, com:
+
+- Tema escuro (dark mode) por padrão
+- Botões e elementos com cantos arredondados
+- Esquema de cores baseado na cor oficial da Twitch (#9147ff)
+- Design moderno e consistente
+- Melhor experiência visual mantendo todas as funcionalidades originais
+
+## Instalação
+
+1. Certifique-se de ter Python 3.7 ou superior instalado
+2. Clone o repositório:
+```
+git clone https://github.com/yourusername/twitch-miner.git
+cd twitch-miner
+```
+3. Instale as dependências:
+```
+pip install -r requirements.txt
+```
+
+## Utilização
+
+Execute o aplicativo principal:
+```
+python run.py
+```
+
+### Configuração de Streamer
+
+1. Vá até a aba "Streams"
+2. Adicione os streamers que você deseja acompanhar
+3. Organize-os por prioridade arrastando e soltando na lista
+4. Clique em "Aplicar alterações" após fazer as alterações
+
+### Configuração de Conta
+
+1. Vá até a aba "Conta"
+2. Insira o seu nome de usuário da Twitch
+3. Clique em "Alterar conta Twitch"
+
+## Planos Disponíveis
+
+### Plano Free
+- Mineração automática de pontos
+- Mineração executada no seu computador
+- Alto uso de CPU
+- Necessário manter o PC ligado
+
+### Plano Pro
+- Mineração em nuvem 24/7
+- Não precisa manter o PC ligado
+- Baixo consumo de CPU
+- Suporte prioritário
+- Relatórios detalhados de ganhos
+
+## Detalhes Técnicos
+
+O aplicativo usa várias tecnologias:
+- Python 3.7+
+- CustomTkinter para a interface moderna
+- Selenium/Requests para interação com a Twitch
+- Pystray para suporte a ícone na bandeja do sistema
 
 ## Funcionalidades
 
