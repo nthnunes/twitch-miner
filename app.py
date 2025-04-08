@@ -756,7 +756,7 @@ class ConsoleApp(ctk.CTk):
         # Label para inicialização automática
         auto_start_label = ctk.CTkLabel(
             auto_start_container,
-            text="Inicialização Automática",
+            text="Iniciar com o Windows",
             font=("Arial", 12)
         )
         auto_start_label.pack(side=tk.LEFT, padx=(0, 10))
@@ -870,7 +870,7 @@ class ConsoleApp(ctk.CTk):
                     update_action_label.bind("<Button-1>", start_update)
                 else:
                     update_status_label.configure(
-                        text=f"Não há atualizações disponíveis. Versão {result['latest_version']} é a mais recente.",
+                        text=f"Não há atualizações disponíveis. A versão {result['latest_version']} é a mais recente.",
                         text_color=("black", "white")
                     )
                     update_action_label.configure(text="")
