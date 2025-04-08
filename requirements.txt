@@ -20,3 +20,4 @@ customtkinter
 CTkMessagebox
 customtkinter-tools
 flask
+win10toast
