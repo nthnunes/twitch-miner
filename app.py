@@ -514,8 +514,12 @@ class ConsoleApp(ctk.CTk):
         frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         frame.pack(fill=tk.BOTH, expand=True)
 
+        # Cria um frame com scrollbar
+        scroll_container = ctk.CTkScrollableFrame(frame, fg_color="transparent")
+        scroll_container.pack(fill=tk.BOTH, expand=True)
+
         # Container para manter o conteúdo
-        content_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        content_frame = ctk.CTkFrame(scroll_container, fg_color="transparent")
         content_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
         # Título
@@ -582,6 +586,14 @@ class ConsoleApp(ctk.CTk):
                     return True
                 
                 @staticmethod
+                def load_chat_notifications():
+                    return True
+                
+                @staticmethod
+                def save_chat_notifications(value):
+                    return True
+                
+                @staticmethod
                 def search_updates(value=False, version="2.0.3", check_only=False):
                     return {
                         "has_update": False,
@@ -630,6 +642,59 @@ class ConsoleApp(ctk.CTk):
             theme_label.configure(text="Tema Claro")
             
         theme_switch.pack(side=tk.RIGHT)
+        
+        # Frame para configurações de notificações
+        notifications_frame = ctk.CTkFrame(content_frame)
+        notifications_frame.pack(fill=tk.X, pady=(0, 15), padx=5)
+        
+        # Título da seção de notificações
+        notifications_title = ctk.CTkLabel(
+            notifications_frame, 
+            text="Notificações", 
+            font=("Arial", 14, "bold")
+        )
+        notifications_title.pack(anchor="w", padx=15, pady=(15, 10))
+        
+        # Container para o switch de notificações de chat
+        chat_notifications_container = ctk.CTkFrame(notifications_frame, fg_color="transparent")
+        chat_notifications_container.pack(fill=tk.X, padx=15, pady=10)
+        
+        # Label para notificações de chat
+        chat_notifications_label = ctk.CTkLabel(
+            chat_notifications_container,
+            text="Menções e Respostas do Chat",
+            font=("Arial", 12)
+        )
+        chat_notifications_label.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # Função para alternar notificações de chat
+        def toggle_chat_notifications():
+            try:
+                state = chat_notifications_switch.get()
+                scanner.save_chat_notifications(state == 1)
+            except:
+                pass
+        
+        # Switch para alternar notificações de chat
+        chat_notifications_switch = ctk.CTkSwitch(
+            chat_notifications_container,
+            text="",
+            command=toggle_chat_notifications,
+            button_color=self.accent_color,
+            button_hover_color=self.accent_hover,
+            progress_color=self.accent_color
+        )
+        
+        # Define o estado inicial do switch baseado na configuração
+        try:
+            if scanner.load_chat_notifications():
+                chat_notifications_switch.select()
+            else:
+                chat_notifications_switch.deselect()
+        except:
+            chat_notifications_switch.select()  # Padrão: habilitado
+            
+        chat_notifications_switch.pack(side=tk.RIGHT)
         
         # Frame para configurações do sistema
         system_frame = ctk.CTkFrame(content_frame)
