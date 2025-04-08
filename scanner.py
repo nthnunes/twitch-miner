@@ -248,7 +248,7 @@ def show_no_update_dialog():
     )
     root3.destroy()
 
-def search_updates(value=False, version="2.0.2", check_only=False):
+def search_updates(value=False, version="2.0.3", check_only=False):
     """
     Verifica se há atualizações disponíveis.
     
