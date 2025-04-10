@@ -229,6 +229,48 @@ def load_autostart():
     except:
         return True  # Em caso de erro, retorna o valor padrão
 
+def load_chat_notifications():
+    """Carrega a configuração de notificações do chat do arquivo config.dat"""
+    try:
+        if not os.path.exists(config_file):
+            with open(config_file, "w") as file:
+                file.write("True\nTrue\nTrue\nTrue\n")  # [auto_update, autostart, dark_theme, chat_notifications]
+            return True
+        else:
+            with open(config_file, "r") as file:
+                lines = file.readlines()
+                
+            # Se não houver linha suficiente para chat_notifications (4ª linha)
+            if len(lines) < 4:
+                return True  # Valor padrão: habilitado
+                
+            return lines[3].strip() == "True"
+    except:
+        return True  # Em caso de erro, retorna o valor padrão
+
+def save_chat_notifications(value):
+    """Salva a configuração de notificações do chat no arquivo config.dat"""
+    try:
+        if os.path.exists(config_file):
+            with open(config_file, "r") as file:
+                lines = file.readlines()
+        else:
+            lines = []
+        
+        # Garante que temos linhas suficientes
+        while len(lines) < 4:
+            lines.append("True\n")
+            
+        # Atualiza a linha para notificações de chat (4ª linha)
+        lines[3] = "True\n" if value else "False\n"
+        
+        with open(config_file, "w") as file:
+            file.writelines(lines)
+        
+        return True
+    except:
+        return False
+
 def show_update_dialog(description):
     root3 = tk.Tk()
     root3.withdraw()
@@ -248,7 +290,7 @@ def show_no_update_dialog():
     )
     root3.destroy()
 
-def search_updates(value=False, version="2.0.2", check_only=False):
+def search_updates(value=False, version="2.0.3", check_only=False):
     """
     Verifica se há atualizações disponíveis.
     
@@ -301,20 +343,24 @@ def search_updates(value=False, version="2.0.2", check_only=False):
         }
 
 def save_theme(is_dark_theme):
-    """Salva a preferência de tema (claro/escuro) no arquivo config.dat"""
+    """Salva a configuração de tema no arquivo config.dat"""
     try:
         if os.path.exists(config_file):
             with open(config_file, "r") as file:
                 lines = file.readlines()
         else:
             lines = []
-            
-        # Certificar-se de que há linhas suficientes [updates, autostart, theme]
+        
+        # Garante que temos linhas suficientes
         while len(lines) < 3:
             lines.append("True\n")
-        
-        # Atualiza a linha do tema (índice 2)
+            
+        # Atualiza a linha para o tema (3ª linha)
         lines[2] = "True\n" if is_dark_theme else "False\n"
+        
+        # Garante que temos uma 4ª linha para chat_notifications se não existir
+        if len(lines) < 4:
+            lines.append("True\n")  # Notificações habilitadas por padrão
         
         with open(config_file, "w") as file:
             file.writelines(lines)
@@ -324,21 +370,20 @@ def save_theme(is_dark_theme):
         return False
 
 def load_theme():
-    """Carrega a preferência de tema do arquivo config.dat"""
+    """Carrega a configuração de tema do arquivo config.dat"""
     try:
         if not os.path.exists(config_file):
-            # Cria um novo arquivo com configurações padrão
             with open(config_file, "w") as file:
-                file.write("True\nTrue\nTrue\n")  # [auto_update, autostart, dark_theme]
-            return True  # Tema escuro por padrão
+                file.write("True\nTrue\nTrue\nTrue\n")  # [auto_update, autostart, dark_theme, chat_notifications]
+            return True
         else:
             with open(config_file, "r") as file:
                 lines = file.readlines()
                 
-            # Se não houver linha para o tema, assume o tema escuro
+            # Se não houver linhas suficientes para o tema (3ª linha)
             if len(lines) < 3:
-                return True
+                return True  # Tema escuro como padrão
                 
             return lines[2].strip() == "True"
     except:
-        return True  # Em caso de erro, retorna o tema escuro
+        return True  # Em caso de erro, retorna tema escuro como padrão

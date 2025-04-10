@@ -2,14 +2,16 @@ import logging
 import time
 from enum import Enum, auto
 from threading import Thread
-
+import scanner
+from win10toast import ToastNotifier
 from irc.bot import SingleServerIRCBot
 
 from TwitchChannelPointsMiner.constants import IRC, IRC_PORT
 from TwitchChannelPointsMiner.classes.Settings import Events, Settings
 
-logger = logging.getLogger(__name__)
+toaster = ToastNotifier()
 
+logger = logging.getLogger(__name__)
 
 class ChatPresence(Enum):
     ALWAYS = auto()
@@ -22,10 +24,11 @@ class ChatPresence(Enum):
 
 
 class ClientIRC(SingleServerIRCBot):
-    def __init__(self, username, token, channel):
+    def __init__(self, username, token, channel, notification_toaster=None):
         self.token = token
         self.channel = "#" + channel
         self.__active = False
+        self.notification_toaster = notification_toaster if notification_toaster else toaster
 
         super(ClientIRC, self).__init__(
             [(IRC, IRC_PORT, f"oauth:{token}")], username, username
@@ -55,7 +58,6 @@ class ClientIRC(SingleServerIRCBot):
         logger.info(f"Event: {event}", extra={"emoji": ":speech_balloon:"})
     """
 
-    # """
     def on_pubmsg(self, connection, event):
         msg = event.arguments[0]
         mention = None
@@ -72,26 +74,48 @@ class ClientIRC(SingleServerIRCBot):
             nick = event.source.split("!", 1)[0]
             # chan = event.target
 
-            logger.info(f"{nick} at {self.channel} wrote: {msg}", extra={
+            logger.info(f"{nick} em {self.channel} escreveu: {msg}", extra={
                         "emoji": ":speech_balloon:", "event": Events.CHAT_MENTION})
-    # """
+            
+            # Verifica se as notificações de chat estão habilitadas antes de exibir
+            chat_notifications_enabled = True
+            try:
+                # Carrega a configuração de notificações do chat do scanner
+                chat_notifications_enabled = scanner.load_chat_notifications()
+            except Exception as e:
+                logger.error(f"Erro ao verificar configuração de notificações: {e}")
+                pass
+            
+            if chat_notifications_enabled and self.notification_toaster:
+                try:
+                    channel_name = self.channel.replace("#", "")
+                    self.notification_toaster.show_toast(
+                        f"Menção no Chat da Twitch - {channel_name}",
+                        f"{nick}: {msg}",
+                        duration=5,
+                        threaded=True
+                    )
+                except Exception as e:
+                    logger.error(f"Erro ao mostrar notificação: {e}")
 
 
 class ThreadChat(Thread):
     def __deepcopy__(self, memo):
         return None
 
-    def __init__(self, username, token, channel):
+    def __init__(self, username, token, channel, toaster=None):
         super(ThreadChat, self).__init__()
 
         self.username = username
         self.token = token
         self.channel = channel
+        self.notification_toaster = toaster if toaster else None
 
         self.chat_irc = None
 
     def run(self):
-        self.chat_irc = ClientIRC(self.username, self.token, self.channel)
+        # Passa o objeto toaster recebido pelo ThreadChat para ClientIRC
+        self.chat_irc = ClientIRC(self.username, self.token, self.channel, self.notification_toaster)
         logger.info(
             f"Chat conectado: {self.channel}", extra={"emoji": ":speech_balloon:"}
         )
