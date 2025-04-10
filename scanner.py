@@ -271,6 +271,51 @@ def save_chat_notifications(value):
     except:
         return False
 
+def load_chat_connected_notifications():
+    """Carrega a configuração de notificações de chat conectado do arquivo config.dat"""
+    try:
+        if not os.path.exists(config_file):
+            with open(config_file, "w") as file:
+                file.write("True\nTrue\nTrue\nTrue\nTrue\n")  # [auto_update, autostart, dark_theme, chat_notifications, chat_connected_notifications]
+            return True
+        else:
+            with open(config_file, "r") as file:
+                lines = file.readlines()
+                
+            # Se não houver linha suficiente para chat_connected_notifications (5ª linha)
+            if len(lines) < 5:
+                # Adiciona a linha faltante
+                with open(config_file, "a") as file:
+                    file.write("True\n")
+                return True  # Valor padrão: habilitado
+                
+            return lines[4].strip() == "True"
+    except:
+        return True  # Em caso de erro, retorna o valor padrão
+
+def save_chat_connected_notifications(value):
+    """Salva a configuração de notificações de chat conectado no arquivo config.dat"""
+    try:
+        if os.path.exists(config_file):
+            with open(config_file, "r") as file:
+                lines = file.readlines()
+        else:
+            lines = []
+        
+        # Garante que temos linhas suficientes
+        while len(lines) < 5:
+            lines.append("True\n")
+            
+        # Atualiza a linha para notificações de chat conectado (5ª linha)
+        lines[4] = "True\n" if value else "False\n"
+        
+        with open(config_file, "w") as file:
+            file.writelines(lines)
+        
+        return True
+    except:
+        return False
+
 def show_update_dialog(description):
     root3 = tk.Tk()
     root3.withdraw()

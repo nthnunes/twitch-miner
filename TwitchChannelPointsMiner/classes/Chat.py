@@ -103,13 +103,13 @@ class ThreadChat(Thread):
     def __deepcopy__(self, memo):
         return None
 
-    def __init__(self, username, token, channel, toaster=None):
+    def __init__(self, username, token, channel, notification_toaster=None):
         super(ThreadChat, self).__init__()
 
         self.username = username
         self.token = token
         self.channel = channel
-        self.notification_toaster = toaster if toaster else None
+        self.notification_toaster = notification_toaster if notification_toaster else toaster
 
         self.chat_irc = None
 
@@ -119,6 +119,28 @@ class ThreadChat(Thread):
         logger.info(
             f"Chat conectado: {self.channel}", extra={"emoji": ":speech_balloon:"}
         )
+        
+        # Verifica se as notificações de chat conectado estão habilitadas antes de exibir
+        chat_connected_notifications_enabled = True
+        try:
+            # Carrega a configuração de notificações de chat conectado do scanner
+            chat_connected_notifications_enabled = scanner.load_chat_connected_notifications()
+        except Exception as e:
+            logger.error(f"Erro ao verificar configuração de notificações de chat conectado: {e}")
+            pass
+        
+        if chat_connected_notifications_enabled and self.notification_toaster:
+            try:
+                channel_name = self.channel.replace("#", "")
+                self.notification_toaster.show_toast(
+                    f"@{channel_name} está online!",
+                    f"Conectado com sucesso ao chat da twitch",
+                    duration=3,
+                    threaded=True
+                )
+            except Exception as e:
+                logger.error(f"Erro ao mostrar notificação de chat conectado: {e}")
+        
         self.chat_irc.start()
 
     def stop(self):

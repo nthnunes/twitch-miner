@@ -594,6 +594,14 @@ class ConsoleApp(ctk.CTk):
                     return True
                 
                 @staticmethod
+                def load_chat_connected_notifications():
+                    return True
+                
+                @staticmethod
+                def save_chat_connected_notifications(value):
+                    return True
+                
+                @staticmethod
                 def search_updates(value=False, version="2.0.3", check_only=False):
                     return {
                         "has_update": False,
@@ -695,6 +703,47 @@ class ConsoleApp(ctk.CTk):
             chat_notifications_switch.select()  # Padrão: habilitado
             
         chat_notifications_switch.pack(side=tk.RIGHT)
+        
+        # Container para o switch de notificações de chat conectado
+        chat_connected_notifications_container = ctk.CTkFrame(notifications_frame, fg_color="transparent")
+        chat_connected_notifications_container.pack(fill=tk.X, padx=15, pady=10)
+        
+        # Label para notificações de chat conectado
+        chat_connected_notifications_label = ctk.CTkLabel(
+            chat_connected_notifications_container,
+            text="Chat Conectado",
+            font=("Arial", 12)
+        )
+        chat_connected_notifications_label.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # Função para alternar notificações de chat conectado
+        def toggle_chat_connected_notifications():
+            try:
+                state = chat_connected_notifications_switch.get()
+                scanner.save_chat_connected_notifications(state == 1)
+            except:
+                pass
+        
+        # Switch para alternar notificações de chat conectado
+        chat_connected_notifications_switch = ctk.CTkSwitch(
+            chat_connected_notifications_container,
+            text="",
+            command=toggle_chat_connected_notifications,
+            button_color=self.accent_color,
+            button_hover_color=self.accent_hover,
+            progress_color=self.accent_color
+        )
+        
+        # Define o estado inicial do switch baseado na configuração
+        try:
+            if scanner.load_chat_connected_notifications():
+                chat_connected_notifications_switch.select()
+            else:
+                chat_connected_notifications_switch.deselect()
+        except:
+            chat_connected_notifications_switch.select()  # Padrão: habilitado
+            
+        chat_connected_notifications_switch.pack(side=tk.RIGHT)
         
         # Frame para configurações do sistema
         system_frame = ctk.CTkFrame(content_frame)
