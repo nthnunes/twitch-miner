@@ -36,7 +36,7 @@ def find_chrome_path():
 
 # Acessa a Twitch diretamente
 async def watch_twitch(channel_name, playwright):
-    print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - INFO - Iniciando navegador para assistir o canal: {channel_name}")
+    print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - INFO - [twitch_viewer]: Iniciando navegador para assistir o canal: {channel_name}")
     twitch_url = f"https://www.twitch.tv/{channel_name}"
 
     chrome_path = find_chrome_path()
