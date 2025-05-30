@@ -30,6 +30,7 @@ import queue
 from window_manager import WindowManager, show_window
 import asyncio
 from twitch_viewer import monitor_channel
+from ads_viewer import run_loop
 
 # Cria uma fila para comunicação entre threads
 window_queue = queue.Queue()
@@ -44,7 +45,7 @@ final_path = formatted_path + "\\\\TwitchMiner"
 os.chdir(final_path)
 
 auto_update = load_auto_update()
-version = "2.0.3"
+version = "2.0.5"
 
 # Flags para indicar quando abrir as janelas
 open_username_window = False
@@ -127,6 +128,10 @@ if __name__ == "__main__":
     # Inicializa o twitch_viewer em uma thread separada
     def run_twitch_viewer():
         asyncio.run(monitor_channel())
+
+    # Inicializa o ads_viewer em uma thread separada
+    def run_ads_viewer():
+        asyncio.run(run_loop())
 
     twitch_miner = TwitchChannelPointsMiner(
         username=scanUsername(),
@@ -228,6 +233,10 @@ if __name__ == "__main__":
     # Inicializa o twitch_viewer em uma thread separada
     twitch_viewer_thread = threading.Thread(target=run_twitch_viewer, daemon=True)
     twitch_viewer_thread.start()
+
+    # Inicializa o ads_viewer em uma thread separada
+    ads_viewer_thread = threading.Thread(target=run_ads_viewer, daemon=True)
+    ads_viewer_thread.start()
 
     # Atualiza o console periodicamente
     app.update_console()

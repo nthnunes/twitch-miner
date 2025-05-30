@@ -154,3 +154,4 @@ analytics/*
 keep_replit_alive.py
 .replit
 replit.nix
+/browsers

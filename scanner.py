@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import messagebox, simpledialog
 from window_manager import show_window, hide_window
 import requests
+import json
 
 
 def createShortcut(enable=True):
@@ -134,142 +135,81 @@ def scanUsername():
     return username
 
 
-config_file = "config.dat"
-def load_auto_update():
-    """Carrega a configuração de atualização automática do arquivo config.dat"""
+config_file = "config.json"
+
+def load_config():
+    """Carrega as configurações do arquivo JSON"""
     try:
-        if not os.path.exists(config_file):
-            # Cria um novo arquivo com configurações padrão
-            with open(config_file, "w") as file:
-                file.write("True\nTrue\nTrue\n")  # [auto_update, autostart, dark_theme]
-            return True  # Atualizações automáticas habilitadas por padrão
+        if os.path.exists(config_file):
+            with open(config_file, "r", encoding="utf-8") as file:
+                return json.load(file)
         else:
-            with open(config_file, "r") as file:
-                lines = file.readlines()
-                
-            # Se não houver linhas suficientes, assume verdadeiro
-            if not lines:
-                return True
-                
-            # Retorna o valor da primeira linha (atualizações automáticas)
-            return lines[0].strip() == "True"
+            return {}
     except:
-        return True  # Em caso de erro, retorna o valor padrão
+        return {}
+
+def save_config(config):
+    """Salva as configurações no arquivo JSON"""
+    try:
+        with open(config_file, "w", encoding="utf-8") as file:
+            json.dump(config, file, indent=2, ensure_ascii=False)
+        return True
+    except:
+        return False
+
+def get_config_value(key, default_value=True):
+    """Obtém um valor específico da configuração"""
+    config = load_config()
+    
+    # Se a chave não existir, adiciona ela com o valor padrão
+    if key not in config:
+        config[key] = default_value
+        save_config(config)
+    
+    return config.get(key, default_value)
+
+def set_config_value(key, value):
+    """Define um valor específico na configuração"""
+    config = load_config()
+    config[key] = value
+    return save_config(config)
+
+def load_auto_update():
+    """Carrega a configuração de atualização automática"""
+    return get_config_value("auto_update", True)
 
 def save_auto_update(value):
-    """Salva a configuração de atualização automática no arquivo config.dat"""
-    try:
-        if os.path.exists(config_file):
-            with open(config_file, "r") as file:
-                lines = file.readlines()
-        else:
-            lines = []
-
-        if not lines:
-            lines = ["True\n", "True\n"]  # Padrão: [auto_update, autostart]
-        
-        # Atualiza a linha para atualizações automáticas
-        lines[0] = "True\n" if value else "False\n"
-        
-        # Certifica-se de que há pelo menos duas linhas (para autostart)
-        if len(lines) < 2:
-            lines.append("True\n")
-
-        with open(config_file, "w") as file:
-            file.writelines(lines)
-        
-        return True
-    except:
-        return False
+    """Salva a configuração de atualização automática"""
+    return set_config_value("auto_update", value)
 
 def save_autostart(value):
-    """Salva a configuração de inicialização automática no arquivo config.dat"""
-    try:
-        if os.path.exists(config_file):
-            with open(config_file, "r") as file:
-                lines = file.readlines()
-        else:
-            lines = []
-            
-        if not lines:
-            lines = ["True\n", "True\n"]  # Padrão: [auto_update, autostart]
-            
-        # Certifica-se de que há pelo menos duas linhas
-        if len(lines) < 2:
-            lines.append("True\n")
-        
-        # Atualiza a linha para inicialização automática
-        lines[1] = "True\n" if value else "False\n"
-        
-        with open(config_file, "w") as file:
-            file.writelines(lines)
-        
-        # Cria ou remove o atalho na pasta Startup
-        createShortcut(value)
-        
-        return True
-    except:
-        return False
+    """Salva a configuração de inicialização automática"""
+    result = set_config_value("autostart", value)
+    
+    # Cria ou remove o atalho na pasta Startup
+    createShortcut(value)
+    
+    return result
 
 def load_autostart():
-    """Carrega a configuração de inicialização automática do arquivo config.dat"""
-    try:
-        if not os.path.exists(config_file):
-            with open(config_file, "w") as file:
-                file.write("True\nTrue\n")
-            return True
-        else:
-            with open(config_file, "r") as file:
-                lines = file.readlines()
-                
-            if len(lines) < 2:
-                return True  # Valor padrão
-                
-            return lines[1].strip() == "True"
-    except:
-        return True  # Em caso de erro, retorna o valor padrão
+    """Carrega a configuração de inicialização automática"""
+    return get_config_value("autostart", True)
 
 def load_chat_notifications():
-    """Carrega a configuração de notificações do chat do arquivo config.dat"""
-    try:
-        if not os.path.exists(config_file):
-            with open(config_file, "w") as file:
-                file.write("True\nTrue\nTrue\nTrue\n")  # [auto_update, autostart, dark_theme, chat_notifications]
-            return True
-        else:
-            with open(config_file, "r") as file:
-                lines = file.readlines()
-                
-            # Se não houver linha suficiente para chat_notifications (4ª linha)
-            if len(lines) < 4:
-                return True  # Valor padrão: habilitado
-                
-            return lines[3].strip() == "True"
-    except:
-        return True  # Em caso de erro, retorna o valor padrão
+    """Carrega a configuração de notificações do chat"""
+    return get_config_value("chat_notifications", True)
 
 def save_chat_notifications(value):
-    """Salva a configuração de notificações do chat no arquivo config.dat"""
-    try:
-        if os.path.exists(config_file):
-            with open(config_file, "r") as file:
-                lines = file.readlines()
-        else:
-            lines = []
-        
-        # Garante que temos linhas suficientes
-        while len(lines) < 4:
-            lines.append("True\n")
-            
-        # Atualiza a linha para notificações de chat (4ª linha)
-        lines[3] = "True\n" if value else "False\n"
-        
-        with open(config_file, "w") as file:
-            file.writelines(lines)
-        
-        return True
-    except:
-        return False
+    """Salva a configuração de notificações do chat"""
+    return set_config_value("chat_notifications", value)
+
+def load_chat_connected_notifications():
+    """Carrega a configuração de notificações de chat conectado"""
+    return get_config_value("chat_connected_notifications", False)
+
+def save_chat_connected_notifications(value):
+    """Salva a configuração de notificações de chat conectado"""
+    return set_config_value("chat_connected_notifications", value)
 
 def show_update_dialog(description):
     root3 = tk.Tk()
@@ -290,7 +230,7 @@ def show_no_update_dialog():
     )
     root3.destroy()
 
-def search_updates(value=False, version="2.0.3", check_only=False):
+def search_updates(value=False, version="2.0.5", check_only=False):
     """
     Verifica se há atualizações disponíveis.
     
@@ -343,47 +283,9 @@ def search_updates(value=False, version="2.0.3", check_only=False):
         }
 
 def save_theme(is_dark_theme):
-    """Salva a configuração de tema no arquivo config.dat"""
-    try:
-        if os.path.exists(config_file):
-            with open(config_file, "r") as file:
-                lines = file.readlines()
-        else:
-            lines = []
-        
-        # Garante que temos linhas suficientes
-        while len(lines) < 3:
-            lines.append("True\n")
-            
-        # Atualiza a linha para o tema (3ª linha)
-        lines[2] = "True\n" if is_dark_theme else "False\n"
-        
-        # Garante que temos uma 4ª linha para chat_notifications se não existir
-        if len(lines) < 4:
-            lines.append("True\n")  # Notificações habilitadas por padrão
-        
-        with open(config_file, "w") as file:
-            file.writelines(lines)
-        
-        return True
-    except:
-        return False
+    """Salva a configuração de tema"""
+    return set_config_value("dark_theme", is_dark_theme)
 
 def load_theme():
-    """Carrega a configuração de tema do arquivo config.dat"""
-    try:
-        if not os.path.exists(config_file):
-            with open(config_file, "w") as file:
-                file.write("True\nTrue\nTrue\nTrue\n")  # [auto_update, autostart, dark_theme, chat_notifications]
-            return True
-        else:
-            with open(config_file, "r") as file:
-                lines = file.readlines()
-                
-            # Se não houver linhas suficientes para o tema (3ª linha)
-            if len(lines) < 3:
-                return True  # Tema escuro como padrão
-                
-            return lines[2].strip() == "True"
-    except:
-        return True  # Em caso de erro, retorna tema escuro como padrão
+    """Carrega a configuração de tema"""
+    return get_config_value("dark_theme", True)
