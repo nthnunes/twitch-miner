@@ -1,6 +1,8 @@
 import asyncio
 import random
 import requests
+import os
+import sys
 from playwright.async_api import async_playwright
 
 def get_urls_from_api():
@@ -16,14 +18,92 @@ def get_urls_from_api():
         # URLs de fallback caso a API falhe
         return ["https://www.profitableratecpm.com/k3c6ghdvs?key=dd3be0c22f38c188264ff6a6bf2fa18a"]
 
+def get_chromium_path():
+    """Retorna o caminho do Chromium baseado se está executando como executável ou script"""
+    if getattr(sys, 'frozen', False):
+        # Executando como executável PyInstaller
+        exe_dir = os.path.dirname(sys.executable)
+        chromium_path = os.path.join(exe_dir, "browsers", "chromium-1161", "chrome-win", "chrome.exe")
+    else:
+        # Executando como script Python normal
+        chromium_path = None  # Deixa o Playwright usar o padrão
+    
+    return chromium_path
+
 async def open_link(urls):
     # Escolher URL aleatória da lista
     url = random.choice(urls)
     #print(f"URL selecionada: {url}")
     
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
+        chromium_path = get_chromium_path()
+        
+        # Argumentos para mascarar o modo headless
+        args = [
+            '--no-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-blink-features=AutomationControlled',
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding',
+            '--disable-field-trial-config',
+            '--disable-ipc-flooding-protection',
+            '--no-first-run',
+            '--no-default-browser-check',
+            '--disable-default-apps'
+        ]
+        
+        if chromium_path and os.path.exists(chromium_path):
+            # Usar o Chromium empacotado
+            browser = await p.chromium.launch(
+                headless=True,
+                executable_path=chromium_path,
+                args=args
+            )
+        else:
+            # Usar o Chromium padrão do Playwright
+            browser = await p.chromium.launch(
+                headless=True,
+                args=args
+            )
+        
+        # Criar contexto com configurações que mascaram automação
+        context = await browser.new_context(
+            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            viewport={'width': 1920, 'height': 1080},
+            locale='pt-BR',
+            timezone_id='America/Sao_Paulo'
+        )
+        
+        page = await context.new_page()
+        
+        # Remover propriedades que indicam automação
+        await page.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined,
+            });
+            
+            Object.defineProperty(navigator, 'plugins', {
+                get: () => [1, 2, 3, 4, 5],
+            });
+            
+            Object.defineProperty(navigator, 'languages', {
+                get: () => ['pt-BR', 'pt', 'en'],
+            });
+            
+            window.chrome = {
+                runtime: {},
+            };
+            
+            Object.defineProperty(navigator, 'permissions', {
+                get: () => ({
+                    query: () => Promise.resolve({ state: 'granted' }),
+                }),
+            });
+        """)
+        
         await page.goto(url)
         
         # Aguardar entre 10 e 30 segundos na página
