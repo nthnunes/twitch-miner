@@ -443,7 +443,7 @@ class ConsoleApp(ctk.CTk):
         title_label.pack(pady=(0, 10), anchor="center")
         
         # Versão
-        version_label = ctk.CTkLabel(content_frame, text="Versão 2.0.3", font=("Arial", 14))
+        version_label = ctk.CTkLabel(content_frame, text="Versão 2.0.5", font=("Arial", 14))
         version_label.pack(pady=(0, 10), anchor="center")
         
         # Desenvolvedor
@@ -602,11 +602,11 @@ class ConsoleApp(ctk.CTk):
                     return True
                 
                 @staticmethod
-                def search_updates(value=False, version="2.0.3", check_only=False):
+                def search_updates(value=False, version="2.0.5", check_only=False):
                     return {
                         "has_update": False,
-                        "current_version": "2.0.3",
-                        "latest_version": "2.0.3",
+                        "current_version": "2.0.5",
+                        "latest_version": "2.0.5",
                         "description": "",
                         "error": False
                     }
@@ -868,7 +868,7 @@ class ConsoleApp(ctk.CTk):
         update_action_label.pack(side=tk.LEFT)
         
         # Versão atual do aplicativo
-        VERSION = "2.0.3"
+        VERSION = "2.0.5"
         
         # Função para buscar atualizações
         def check_for_updates():
