@@ -3,21 +3,36 @@ import random
 import requests
 import os
 import sys
+import time
 from playwright.async_api import async_playwright
 from datetime import datetime
 
 def get_urls_from_api():
-    """Busca todas as URLs da API uma única vez"""
-    try:
-        #print("Buscando URLs da API...")
-        response = requests.get("https://twitch-miner-api.vercel.app/ads")
-        urls = response.json()
-        #print(f"Encontradas {len(urls)} URLs")
-        return urls
-    except Exception as e:
-        #print(f"Erro ao buscar URLs da API: {e}")
-        # URLs de fallback caso a API falhe
-        return ["https://www.profitableratecpm.com/k3c6ghdvs?key=dd3be0c22f38c188264ff6a6bf2fa18a"]
+    wait_time = 300  # Começar com 5 minutos
+    max_wait_time = 7200  # Máximo de 2 horas (120 minutos)
+    
+    while True:
+        try:
+            #print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - INFO - [ads_viewer]: Buscando URLs da API...")
+            response = requests.get("https://twitch-miner-api.vercel.app/ads")
+            urls = response.json()
+            
+            # Verificar se o vetor não está vazio
+            if urls and len(urls) > 0:
+                #print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - INFO - [ads_viewer]: Encontradas {len(urls)} URLs")
+                return urls
+            else:
+                #print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - WARNING - [ads_viewer]: API retornou lista vazia")
+                raise Exception("Lista de URLs vazia")
+                
+        except Exception as e:
+            print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - ERROR - [ads_viewer]: Erro ao buscar URLs da API: {e}")
+            print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - INFO - [ads_viewer]: Tentando novamente em {wait_time//60} minutos...")
+            
+            time.sleep(wait_time)
+            
+            # Dobrar o tempo de espera para a próxima tentativa, respeitando o máximo
+            wait_time = min(wait_time * 2, max_wait_time)
 
 def get_chromium_path():
     """Retorna o caminho do Chromium baseado se está executando como executável ou script"""
