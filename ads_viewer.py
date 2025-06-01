@@ -4,6 +4,7 @@ import requests
 import os
 import sys
 from playwright.async_api import async_playwright
+from datetime import datetime
 
 def get_urls_from_api():
     """Busca todas as URLs da API uma única vez"""
@@ -104,12 +105,17 @@ async def open_link(urls):
             });
         """)
         
-        await page.goto(url)
-        
-        # Aguardar entre 10 e 30 segundos na página
-        wait_time = random.randint(10, 30)
-        #print(f"Aguardando {wait_time} segundos...")
-        await asyncio.sleep(wait_time)
+        try:
+            await page.goto(url)
+            
+            # Aguardar entre 10 e 30 segundos na página
+            wait_time = random.randint(10, 30)
+            #print(f"Aguardando {wait_time} segundos...")
+            await asyncio.sleep(wait_time)
+            
+        except Exception as e:
+            print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - ERROR - [ads_viewer]: Não foi possível carregar os anúncios: {e}")
+            #print(f"Erro detalhado: {e}")
         
         await browser.close()
 
