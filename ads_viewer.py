@@ -26,8 +26,8 @@ def get_urls_from_api():
                 raise Exception("Lista de URLs vazia")
                 
         except Exception as e:
-            print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - ERROR - [ads_viewer]: Erro ao buscar URLs da API: {e}")
-            print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - INFO - [ads_viewer]: Tentando novamente em {wait_time//60} minutos...")
+            #print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - ERROR - [ads_viewer]: Erro ao buscar URLs da API: {e}")
+            #print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - INFO - [ads_viewer]: Tentando novamente em {wait_time//60} minutos...")
             
             time.sleep(wait_time)
             
