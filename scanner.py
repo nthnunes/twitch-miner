@@ -139,7 +139,7 @@ def scanUsername():
         api_body = {
             "client": os.getlogin(),
             "twitchUsername": username,
-            "version": "2.0.5",
+            "version": "2.0.6",
             "lastSignIn": datetime.now().isoformat()
         }
         
@@ -245,7 +245,7 @@ def show_no_update_dialog():
     )
     root3.destroy()
 
-def search_updates(value=False, version="2.0.5", check_only=False):
+def search_updates(value=False, version="2.0.6", check_only=False):
     """
     Verifica se há atualizações disponíveis.
     
