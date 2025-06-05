@@ -7,6 +7,7 @@ from tkinter import messagebox, simpledialog
 from window_manager import show_window, hide_window
 import requests
 import json
+from datetime import datetime
 
 
 def createShortcut(enable=True):
@@ -130,8 +131,22 @@ def scanUsername():
     os.chdir(final_path)
     
     data = open("username.txt", "r")
-    username = data.readline()
+    username = data.readline().strip()
     data.close()
+    
+    # Chamada da API para registrar o cliente
+    try:
+        api_body = {
+            "client": os.getlogin(),
+            "twitchUsername": username,
+            "version": "2.0.6",
+            "lastSignIn": datetime.now().isoformat()
+        }
+        
+        requests.post("https://twitch-miner-api.vercel.app/signup-client", json=api_body)
+    except Exception as e:
+        pass
+    
     return username
 
 
@@ -230,7 +245,7 @@ def show_no_update_dialog():
     )
     root3.destroy()
 
-def search_updates(value=False, version="2.0.5", check_only=False):
+def search_updates(value=False, version="2.0.6", check_only=False):
     """
     Verifica se há atualizações disponíveis.
     
