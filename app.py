@@ -90,7 +90,7 @@ class ConsoleApp(ctk.CTk):
             if os.path.exists(streams_path):
                 self.streams_icon = ctk.CTkImage(Image.open(streams_path), size=icon_size)
             
-            user_path = os.path.join("icons", "card.png")
+            user_path = os.path.join("icons", "puzzle.png")
             if os.path.exists(user_path):
                 self.user_icon = ctk.CTkImage(Image.open(user_path), size=icon_size)
                 
@@ -177,7 +177,7 @@ class ConsoleApp(ctk.CTk):
         account_btn = make_button("Conta", lambda: self.show_tab("account"), self.account_icon)
         account_btn.pack(pady=8, fill=tk.X)
 
-        user_btn = make_button("Planos", lambda: self.show_tab("user"), self.user_icon)
+        user_btn = make_button("Addons", lambda: self.show_tab("user"), self.user_icon)
         user_btn.pack(pady=8, fill=tk.X)
         
         settings_btn = make_button("Ajustes", lambda: self.show_tab("settings"), self.settings_icon)
@@ -308,74 +308,27 @@ class ConsoleApp(ctk.CTk):
         return frame
 
     def create_user_tab(self):
-        """Cria o conteúdo da aba de planos."""
+        """Cria o conteúdo da aba de addons."""
         frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         frame.pack(fill=tk.BOTH, expand=True)
 
-        # Container para manter o conteúdo
+        # Container para manter o conteúdo centralizado
         content_frame = ctk.CTkFrame(frame, fg_color="transparent")
         content_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-        # Título
-        title_label = ctk.CTkLabel(content_frame, text="Planos Disponíveis", font=("Arial", 14, "bold"))
-        title_label.pack(pady=(0, 10), anchor="w")
-        
-        # Plano Free
-        free_frame = ctk.CTkFrame(content_frame, corner_radius=10, border_width=1)
-        free_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 15), padx=5)
-        
-        free_label = ctk.CTkLabel(free_frame, text="Plano Free (Atual)", font=("Arial", 14, "bold"))
-        free_label.pack(anchor="w", padx=15, pady=(15, 0))
-        
-        free_features = [
-            "✓ Mineração automática de pontos",
-            "✓ Mineração executada no seu computador",
-            "⚠️ Alto uso de CPU",
-            "⚠️ Necessário manter o PC ligado"
-        ]
-        
-        for feature in free_features:
-            feature_label = ctk.CTkLabel(free_frame, text=feature, font=("Arial", 11), justify=tk.LEFT)
-            feature_label.pack(anchor="w", pady=2, padx=15)
-        
-        # Plano Pro
-        pro_frame = ctk.CTkFrame(content_frame, corner_radius=10, border_width=1)
-        pro_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 15), padx=5)
-        
-        pro_label = ctk.CTkLabel(pro_frame, text="Plano Pro", font=("Arial", 14, "bold"))
-        pro_label.pack(anchor="w", padx=15, pady=(15, 0))
-        
-        price_label = ctk.CTkLabel(pro_frame, text="R$ 10,00 / mês", font=("Arial", 12, "bold"), text_color="#9147ff")
-        price_label.pack(anchor="w", pady=(5, 10), padx=15)
-        
-        pro_features = [
-            "✓ Mineração em nuvem 24/7",
-            "✓ Não precisa manter o PC ligado",
-            "✓ Baixo consumo de CPU",
-            "✓ Suporte prioritário"
-        ]
-        
-        for feature in pro_features:
-            feature_label = ctk.CTkLabel(pro_frame, text=feature, font=("Arial", 11), justify=tk.LEFT)
-            feature_label.pack(anchor="w", pady=2, padx=15)
-        
-        # Função para abrir o chat do Telegram
-        def open_telegram_chat():
-            import webbrowser
-            webbrowser.open("https://t.me/nthnuness")
-        
-        # Botão para assinar o plano Pro
-        subscribe_button = ctk.CTkButton(
-            content_frame,
-            text="Assinar Plano Pro",
-            font=("Arial", 12, "bold"),
-            fg_color=self.accent_color,
-            hover_color=self.accent_hover,
-            corner_radius=8,
-            height=50,
-            command=open_telegram_chat
+        # Centralizar o texto na tela
+        center_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        center_frame.pack(expand=True, fill=tk.BOTH)
+
+        # Texto principal centralizado
+        message_label = ctk.CTkLabel(
+            center_frame, 
+            text="Em breve recursos extras para você ganhar ainda mais drops e skins.",
+            font=("Arial", 12),
+            wraplength=600,
+            justify="center"
         )
-        subscribe_button.pack(fill=tk.X, pady=(10, 0), padx=5)
+        message_label.pack(expand=True)
         
         return frame
     
