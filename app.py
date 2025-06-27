@@ -298,6 +298,18 @@ class ConsoleApp(ctk.CTk):
         )
         restart_button.pack(fill=tk.X, pady=(0, 10), padx=5)
 
+        # Botão para ver loja StreamElements
+        streamelements_button = ctk.CTkButton(
+            controls_frame, 
+            text="Ver Loja StreamElements", 
+            command=lambda: self.open_streamelements_store(self.streams_listbox),
+            corner_radius=8,
+            fg_color=self.accent_color,
+            hover_color=self.accent_hover,
+            font=("Arial", 12)
+        )
+        streamelements_button.pack(fill=tk.X, pady=(40, 10), padx=5)
+
         # Vincular eventos de arrastar e soltar
         self.streams_listbox.bind("<Button-1>", lambda event: self.start_drag(event, self.streams_listbox))
         self.streams_listbox.bind("<B1-Motion>", lambda event: self.on_drag(event, self.streams_listbox))
@@ -1018,6 +1030,26 @@ class ConsoleApp(ctk.CTk):
     def restart_bot(self):
         # Exibindo uma mensagem de confirmação
         tk.messagebox.showinfo("Alteração bem-sucedida", f"Para as alterações surtirem efeito reinicie o bot.")
+
+    def open_streamelements_store(self, listbox):
+        """Abre a loja StreamElements do streamer selecionado."""
+        try:
+            # Verifica se há um streamer selecionado
+            selected_index = listbox.curselection()[0]
+            selected_item = listbox.get(selected_index)
+            
+            # Remove a numeração para obter apenas o nome do streamer
+            streamer_name = selected_item.split(". ", 1)[1]
+            
+            # Constrói a URL da loja StreamElements
+            store_url = f"https://streamelements.com/{streamer_name}/store"
+            
+            # Abre a URL no navegador padrão
+            import webbrowser
+            webbrowser.open(store_url)
+            
+        except IndexError:
+            tk.messagebox.showwarning("Aviso", "Por favor, selecione um streamer da lista para ver sua loja StreamElements.")
 
     # Função para carregar o nome de usuário do arquivo
     def load_username(self):
