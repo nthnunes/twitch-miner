@@ -90,7 +90,7 @@ class ConsoleApp(ctk.CTk):
             if os.path.exists(streams_path):
                 self.streams_icon = ctk.CTkImage(Image.open(streams_path), size=icon_size)
             
-            user_path = os.path.join("icons", "card.png")
+            user_path = os.path.join("icons", "puzzle.png")
             if os.path.exists(user_path):
                 self.user_icon = ctk.CTkImage(Image.open(user_path), size=icon_size)
                 
@@ -177,7 +177,7 @@ class ConsoleApp(ctk.CTk):
         account_btn = make_button("Conta", lambda: self.show_tab("account"), self.account_icon)
         account_btn.pack(pady=8, fill=tk.X)
 
-        user_btn = make_button("Planos", lambda: self.show_tab("user"), self.user_icon)
+        user_btn = make_button("Addons", lambda: self.show_tab("user"), self.user_icon)
         user_btn.pack(pady=8, fill=tk.X)
         
         settings_btn = make_button("Ajustes", lambda: self.show_tab("settings"), self.settings_icon)
@@ -298,6 +298,18 @@ class ConsoleApp(ctk.CTk):
         )
         restart_button.pack(fill=tk.X, pady=(0, 10), padx=5)
 
+        # Botão para ver loja StreamElements
+        streamelements_button = ctk.CTkButton(
+            controls_frame, 
+            text="Ver Loja StreamElements", 
+            command=lambda: self.open_streamelements_store(self.streams_listbox),
+            corner_radius=8,
+            fg_color=self.accent_color,
+            hover_color=self.accent_hover,
+            font=("Arial", 12)
+        )
+        streamelements_button.pack(fill=tk.X, pady=(40, 10), padx=5)
+
         # Vincular eventos de arrastar e soltar
         self.streams_listbox.bind("<Button-1>", lambda event: self.start_drag(event, self.streams_listbox))
         self.streams_listbox.bind("<B1-Motion>", lambda event: self.on_drag(event, self.streams_listbox))
@@ -308,74 +320,27 @@ class ConsoleApp(ctk.CTk):
         return frame
 
     def create_user_tab(self):
-        """Cria o conteúdo da aba de planos."""
+        """Cria o conteúdo da aba de addons."""
         frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         frame.pack(fill=tk.BOTH, expand=True)
 
-        # Container para manter o conteúdo
+        # Container para manter o conteúdo centralizado
         content_frame = ctk.CTkFrame(frame, fg_color="transparent")
         content_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
-        # Título
-        title_label = ctk.CTkLabel(content_frame, text="Planos Disponíveis", font=("Arial", 14, "bold"))
-        title_label.pack(pady=(0, 10), anchor="w")
-        
-        # Plano Free
-        free_frame = ctk.CTkFrame(content_frame, corner_radius=10, border_width=1)
-        free_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 15), padx=5)
-        
-        free_label = ctk.CTkLabel(free_frame, text="Plano Free (Atual)", font=("Arial", 14, "bold"))
-        free_label.pack(anchor="w", padx=15, pady=(15, 0))
-        
-        free_features = [
-            "✓ Mineração automática de pontos",
-            "✓ Mineração executada no seu computador",
-            "⚠️ Alto uso de CPU",
-            "⚠️ Necessário manter o PC ligado"
-        ]
-        
-        for feature in free_features:
-            feature_label = ctk.CTkLabel(free_frame, text=feature, font=("Arial", 11), justify=tk.LEFT)
-            feature_label.pack(anchor="w", pady=2, padx=15)
-        
-        # Plano Pro
-        pro_frame = ctk.CTkFrame(content_frame, corner_radius=10, border_width=1)
-        pro_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 15), padx=5)
-        
-        pro_label = ctk.CTkLabel(pro_frame, text="Plano Pro", font=("Arial", 14, "bold"))
-        pro_label.pack(anchor="w", padx=15, pady=(15, 0))
-        
-        price_label = ctk.CTkLabel(pro_frame, text="R$ 10,00 / mês", font=("Arial", 12, "bold"), text_color="#9147ff")
-        price_label.pack(anchor="w", pady=(5, 10), padx=15)
-        
-        pro_features = [
-            "✓ Mineração em nuvem 24/7",
-            "✓ Não precisa manter o PC ligado",
-            "✓ Baixo consumo de CPU",
-            "✓ Suporte prioritário"
-        ]
-        
-        for feature in pro_features:
-            feature_label = ctk.CTkLabel(pro_frame, text=feature, font=("Arial", 11), justify=tk.LEFT)
-            feature_label.pack(anchor="w", pady=2, padx=15)
-        
-        # Função para abrir o chat do Telegram
-        def open_telegram_chat():
-            import webbrowser
-            webbrowser.open("https://t.me/nthnuness")
-        
-        # Botão para assinar o plano Pro
-        subscribe_button = ctk.CTkButton(
-            content_frame,
-            text="Assinar Plano Pro",
-            font=("Arial", 12, "bold"),
-            fg_color=self.accent_color,
-            hover_color=self.accent_hover,
-            corner_radius=8,
-            height=50,
-            command=open_telegram_chat
+        # Centralizar o texto na tela
+        center_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        center_frame.pack(expand=True, fill=tk.BOTH)
+
+        # Texto principal centralizado
+        message_label = ctk.CTkLabel(
+            center_frame, 
+            text="Em breve recursos extras para você ganhar ainda mais drops e skins.",
+            font=("Arial", 12),
+            wraplength=600,
+            justify="center"
         )
-        subscribe_button.pack(fill=tk.X, pady=(10, 0), padx=5)
+        message_label.pack(expand=True)
         
         return frame
     
@@ -443,7 +408,7 @@ class ConsoleApp(ctk.CTk):
         title_label.pack(pady=(0, 10), anchor="center")
         
         # Versão
-        version_label = ctk.CTkLabel(content_frame, text="Versão 2.0.6", font=("Arial", 14))
+        version_label = ctk.CTkLabel(content_frame, text="Versão 2.1.0", font=("Arial", 14))
         version_label.pack(pady=(0, 10), anchor="center")
         
         # Desenvolvedor
@@ -602,11 +567,11 @@ class ConsoleApp(ctk.CTk):
                     return True
                 
                 @staticmethod
-                def search_updates(value=False, version="2.0.6", check_only=False):
+                def search_updates(value=False, version="2.1.0", check_only=False):
                     return {
                         "has_update": False,
-                        "current_version": "2.0.6",
-                        "latest_version": "2.0.6",
+                        "current_version": "2.1.0",
+                        "latest_version": "2.1.0",
                         "description": "",
                         "error": False
                     }
@@ -868,7 +833,7 @@ class ConsoleApp(ctk.CTk):
         update_action_label.pack(side=tk.LEFT)
         
         # Versão atual do aplicativo
-        VERSION = "2.0.6"
+        VERSION = "2.1.0"
         
         # Função para buscar atualizações
         def check_for_updates():
@@ -1065,6 +1030,26 @@ class ConsoleApp(ctk.CTk):
     def restart_bot(self):
         # Exibindo uma mensagem de confirmação
         tk.messagebox.showinfo("Alteração bem-sucedida", f"Para as alterações surtirem efeito reinicie o bot.")
+
+    def open_streamelements_store(self, listbox):
+        """Abre a loja StreamElements do streamer selecionado."""
+        try:
+            # Verifica se há um streamer selecionado
+            selected_index = listbox.curselection()[0]
+            selected_item = listbox.get(selected_index)
+            
+            # Remove a numeração para obter apenas o nome do streamer
+            streamer_name = selected_item.split(". ", 1)[1]
+            
+            # Constrói a URL da loja StreamElements
+            store_url = f"https://streamelements.com/{streamer_name}/store"
+            
+            # Abre a URL no navegador padrão
+            import webbrowser
+            webbrowser.open(store_url)
+            
+        except IndexError:
+            tk.messagebox.showwarning("Aviso", "Por favor, selecione um streamer da lista para ver sua loja StreamElements.")
 
     # Função para carregar o nome de usuário do arquivo
     def load_username(self):
