@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
     # Inicializa o twitch_viewer em uma thread separada
     def run_twitch_viewer():
-        asyncio.run(monitor_channel())
+        monitor_channel()
 
     # Inicializa o ads_viewer em uma thread separada
     def run_ads_viewer():
@@ -231,8 +231,8 @@ if __name__ == "__main__":
     auto_updater_thread.start()
 
     # Inicializa o twitch_viewer em uma thread separada
-    twitch_viewer_thread = threading.Thread(target=run_twitch_viewer, daemon=True)
-    twitch_viewer_thread.start()
+    """ twitch_viewer_thread = threading.Thread(target=run_twitch_viewer, daemon=True)
+    twitch_viewer_thread.start() """
 
     # Inicializa o ads_viewer em uma thread separada
     ads_viewer_thread = threading.Thread(target=run_ads_viewer, daemon=True)
