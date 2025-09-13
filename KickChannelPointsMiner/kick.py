@@ -1,24 +1,17 @@
 import websocket
 import json
-import time
-import re
-import random
-import string
 
 class KickChat:
     def __init__(self):
         self.ws = None
         self.is_connected = False
-        self.channel_name = "janaban"  # Canal padrão
+        self.channel_name = "iamra"  # Canal padrão
         self.session_token = "235955519%7CYL4hS6XloKZ5dFuuqV4m7gNDMYrJIEw3DASgtcMi"  # Token fornecido
         
     def connect(self):
         """Conecta ao chat da Kick"""
         try:
             print(f"[INFO] Conectando ao chat da Kick no canal: {self.channel_name}")
-            
-            # Gera um ID de cliente aleatório para a conexão
-            client_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=16))
             
             # URL do WebSocket da Kick (baseado em pesquisas)
             # A Kick usa o serviço Pusher para WebSockets
@@ -66,7 +59,7 @@ class KickChat:
             # Vamos tentar obter o ID do chatroom a partir do nome do canal
             
             # Primeiro tenta com o ID do canal que você está vendo (209106)
-            chat_events_channel = f"chatrooms.209106.v2"
+            chat_events_channel = f"chatrooms.3925550.v2"
             subscribe_chat_data = {
                 "event": "pusher:subscribe",
                 "data": {
