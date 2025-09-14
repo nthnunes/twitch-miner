@@ -39,27 +39,8 @@ class KickChat:
         
         # Autentica e inscreve no canal de chat
         try:
-            # Formato do canal no Pusher: channel-username
-            channel_id = f"channel-{self.channel_name}"
-            
-            # Inscreve no canal de chat
-            subscribe_data = {
-                "event": "pusher:subscribe",
-                "data": {
-                    "auth": "",
-                    "channel": channel_id
-                }
-            }
-            
-            print(f"[DEBUG] Inscrevendo no canal: {channel_id}")
-            self.ws.send(json.dumps(subscribe_data))
-            
-            # Inscreve no canal de chat-events que contém mensagens
-            # Vendo sua captura de tela, o formato correto é chatrooms.209106.v2
-            # Vamos tentar obter o ID do chatroom a partir do nome do canal
-            
-            # Primeiro tenta com o ID do canal que você está vendo (209106)
-            chat_events_channel = f"chatrooms.3925550.v2"
+            # Inscreve apenas no canal de chat que funciona (com ID numérico)
+            chat_events_channel = f"chatrooms.53200361.v2"
             subscribe_chat_data = {
                 "event": "pusher:subscribe",
                 "data": {
@@ -68,23 +49,10 @@ class KickChat:
                 }
             }
             
-            print(f"[DEBUG] Inscrevendo no canal de chat específico: {chat_events_channel}")
+            print(f"[DEBUG] Inscrevendo no canal de chat: {chat_events_channel}")
             self.ws.send(json.dumps(subscribe_chat_data))
             
-            # Também tenta com o nome do canal (pode ser necessário para outros canais)
-            chat_events_channel2 = f"chatrooms.{self.channel_name}.v2"
-            subscribe_chat_data2 = {
-                "event": "pusher:subscribe",
-                "data": {
-                    "auth": "",
-                    "channel": chat_events_channel2
-                }
-            }
-            
-            print(f"[DEBUG] Inscrevendo no canal de chat com nome: {chat_events_channel2}")
-            self.ws.send(json.dumps(subscribe_chat_data2))
-            
-            print("[INFO] Inscrição nos canais concluída")
+            print("[INFO] Inscrição no canal concluída")
             
         except Exception as e:
             print(f"[ERRO] Falha na autenticação: {e}")
