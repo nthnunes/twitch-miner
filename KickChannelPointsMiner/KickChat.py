@@ -91,7 +91,7 @@ class KickChat:
             subscribe_chat_data = {
                 "event": "pusher:subscribe",
                 "data": {
-                    "auth": "",
+                    "auth": self.session_token,
                     "channel": chat_events_channel
                 }
             }
@@ -181,7 +181,7 @@ class KickChat:
 
 
 if __name__ == "__main__":
-    chat = KickChat("theleaway", "", DEBUG=True)
+    chat = KickChat("sirtoxico", "", DEBUG=True)
     
     try:
         print("Iniciando conexão com o chat da Kick...")
