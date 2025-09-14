@@ -1,17 +1,76 @@
 import websocket
 import json
+from kickapi import KickAPI
 
 class KickChat:
-    def __init__(self):
+    def __init__(self, channel_name="littylinhh"):
         self.ws = None
         self.is_connected = False
-        self.channel_name = "iamra"  # Canal padrão
+        self.channel_name = channel_name  # Nome do canal
         self.session_token = "235955519%7CYL4hS6XloKZ5dFuuqV4m7gNDMYrJIEw3DASgtcMi"  # Token fornecido
+        self.channel_id = None
+        self.chatroom_id = None
         
+    def get_channel_info(self):
+        """Obtém o ID do canal e do chatroom diretamente via API"""
+        try:
+            print(f"[INFO] Obtendo informações do canal: {self.channel_name}")
+            
+            import cloudscraper
+            import ua_generator
+            
+            # Cria uma sessão com CloudScraper para contornar proteções anti-bot
+            scraper = cloudscraper.create_scraper()
+            ua = ua_generator.generate()
+            
+            # Cabeçalhos para simular um navegador real
+            headers = {
+                "Accept": "application/json",
+                "Alt-Used": "kick.com",
+                "Priority": "u=0, i",
+                "Connection": "keep-alive",
+                "User-Agent": ua.text,
+                "Referer": f"https://kick.com/{self.channel_name}",
+                "Origin": "https://kick.com"
+            }
+            
+            # Usa o endpoint v2 da API
+            url = f"https://kick.com/api/v2/channels/{self.channel_name}/chatroom"
+            print(f"[INFO] Fazendo requisição para: {url}")
+            
+            response = scraper.get(url, headers=headers)
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    print(f"[DEBUG] Resposta da API: {data}")
+                    
+                    self.chatroom_id = data.get("id")
+                    self.channel_id = data.get("channel_id")
+                    
+                    print(f"[INFO] Channel ID: {self.channel_id}")
+                    print(f"[INFO] Chatroom ID: {self.chatroom_id}")
+                    return True
+                except ValueError as e:
+                    print(f"[ERRO] Falha ao processar JSON: {e}")
+                    print(f"[DEBUG] Conteúdo da resposta: {response.text[:200]}...")
+                    return False
+            else:
+                print(f"[ERRO] Falha na requisição: {response.status_code} - {response.text[:200]}...")
+                return False
+        except Exception as e:
+            print(f"[ERRO] Exceção ao obter informações do canal: {e}")
+            return False
+    
     def connect(self):
         """Conecta ao chat da Kick"""
         try:
-            print(f"[INFO] Conectando ao chat da Kick no canal: {self.channel_name}")
+            # Primeiro obtém o ID do canal
+            if not self.get_channel_info():
+                print("[ERRO] Não foi possível obter o ID do canal. Encerrando o script.")
+                return
+                
+            print(f"[INFO] Conectando ao chat da Kick no canal: {self.channel_name} (ID: {self.channel_id})")
             
             # URL do WebSocket da Kick (baseado em pesquisas)
             # A Kick usa o serviço Pusher para WebSockets
@@ -39,8 +98,8 @@ class KickChat:
         
         # Autentica e inscreve no canal de chat
         try:
-            # Inscreve apenas no canal de chat que funciona (com ID numérico)
-            chat_events_channel = f"chatrooms.53200361.v2"
+            # Inscreve no canal de chat usando o ID do chatroom obtido
+            chat_events_channel = f"chatrooms.{self.chatroom_id}.v2"
             subscribe_chat_data = {
                 "event": "pusher:subscribe",
                 "data": {
