@@ -7,21 +7,19 @@ class KickChat:
     def __init__(self, channel_name, session_token, DEBUG=False):
         self.ws = None
         self.is_connected = False
-        self.channel_name = channel_name  # Nome do canal
-        self.session_token = session_token  # Token fornecido
+        self.channel_name = channel_name
+        self.session_token = session_token
         self.chatroom_id = None
         self.DEBUG = DEBUG
         
     def get_channel_info(self):
-        """Obtém o ID do chatroom diretamente via API"""
+        """Get chatroom ID from Kick API"""
         try:
             print(f"[INFO] Obtendo informações do canal: {self.channel_name}")
             
-            # Cria uma sessão com CloudScraper para contornar proteções anti-bot
             scraper = cloudscraper.create_scraper()
             ua = ua_generator.generate()
             
-            # Cabeçalhos para simular um navegador real
             headers = {
                 "Accept": "application/json",
                 "Alt-Used": "kick.com",
@@ -32,7 +30,6 @@ class KickChat:
                 "Origin": "https://kick.com"
             }
             
-            # Usa o endpoint v2 da API
             url = f"https://kick.com/api/v2/channels/{self.channel_name}/chatroom"
             if self.DEBUG:
                 print(f"[DEBUG] Fazendo requisição para: {url}")
@@ -46,7 +43,6 @@ class KickChat:
                         print(f"[DEBUG] Resposta da API: {data}")
                     
                     self.chatroom_id = data.get("id")
-                    
                     print(f"[INFO] Chatroom ID: {self.chatroom_id}")
                     return True
                 except ValueError as e:
@@ -62,20 +58,16 @@ class KickChat:
             return False
     
     def connect(self):
-        """Conecta ao chat da Kick"""
+        """Connect to Kick chat"""
         try:
-            # Primeiro obtém o ID do chatroom
             if not self.get_channel_info():
-                print("[ERRO] Não foi possível obter o ID do chatroom. Encerrando o script.")
+                print("[ERRO] Não foi possível obter o ID do chatroom. Encerrando.")
                 return
                 
-            print(f"[INFO] Conectando ao chat da Kick no canal: {self.channel_name} (Chatroom ID: {self.chatroom_id})")
+            print(f"[INFO] Conectando ao chat da Kick: {self.channel_name} (ID: {self.chatroom_id})")
             
-            # URL do WebSocket da Kick (baseado em pesquisas)
-            # A Kick usa o serviço Pusher para WebSockets
             ws_url = f"wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=8.4.0&flash=false"
             
-            # Conecta ao WebSocket
             self.ws = websocket.WebSocketApp(
                 ws_url,
                 on_open=self.on_open,
@@ -84,20 +76,17 @@ class KickChat:
                 on_error=self.on_error
             )
             
-            # Inicia a conexão em thread principal
             self.ws.run_forever()
 
         except Exception as e:
             print(f"[ERRO] Falha ao conectar no chat da Kick: {e}")
 
     def on_open(self, ws):
-        """Callback quando a conexão é estabelecida"""
-        print("[INFO] Conectado ao serviço WebSocket da Kick")
+        """WebSocket connection established"""
+        print("[INFO] Conectado ao WebSocket da Kick")
         self.is_connected = True
         
-        # Autentica e inscreve no canal de chat
         try:
-            # Inscreve no canal de chat usando o ID do chatroom obtido
             chat_events_channel = f"chatrooms.{self.chatroom_id}.v2"
             subscribe_chat_data = {
                 "event": "pusher:subscribe",
@@ -117,19 +106,16 @@ class KickChat:
             print(f"[ERRO] Falha na autenticação: {e}")
 
     def on_message(self, ws, message):
-        """Callback quando recebe uma mensagem"""
+        """Handle incoming WebSocket messages"""
         try:
             if self.DEBUG:
                 print(f"[DEBUG] Mensagem recebida: {message}")
             
-            # Tenta converter a mensagem para JSON
             data = json.loads(message)
             
-            # Verifica se é uma mensagem do chat
             if data.get("event") == "App\\Events\\ChatMessageEvent":
                 self.parse_chat_message(data)
                 
-            # Responde a pings para manter a conexão viva
             if data.get("event") == "pusher:ping":
                 pong_data = {"event": "pusher:pong", "data": {}}
                 self.ws.send(json.dumps(pong_data))
@@ -142,47 +128,36 @@ class KickChat:
             print(f"[ERRO] Erro ao processar mensagem: {e}")
 
     def on_close(self, ws, close_status_code, close_msg):
-        """Callback quando a conexão é fechada"""
+        """WebSocket connection closed"""
         print(f"[INFO] Desconectado do chat da Kick: {close_status_code} - {close_msg}")
         self.is_connected = False
 
     def on_error(self, ws, error):
-        """Callback quando ocorre um erro"""
+        """WebSocket error occurred"""
         print(f"[ERRO] Erro no chat da Kick: {error}")
         self.is_connected = False
 
     def parse_chat_message(self, data):
-        """Extrai e imprime mensagens do chat"""
+        """Parse and print chat messages"""
         try:
-            # Baseado na captura de tela, o formato correto das mensagens é:
-            # {"event":"App\\Events\\ChatMessageEvent","data":"...","channel":"chatrooms.209106.v2"}
-            
-            # Extrai os dados da mensagem do formato JSON da Kick
             if isinstance(data, dict) and "data" in data and "event" in data:
-                # Verifica se é um evento de chat
                 if "ChatMessageEvent" in data["event"]:
                     try:
-                        # A mensagem está em formato string JSON dentro do campo "data"
                         message_data = json.loads(data["data"])
                         
-                        # Imprime os dados para debug apenas se DEBUG=True
                         if self.DEBUG:
                             print(f"[DEBUG] Dados da mensagem: {message_data}")
                         
-                        # Extrai o conteúdo da mensagem
                         if "content" in message_data:
                             content = message_data["content"]
-                            
-                            # Extrai o nome de usuário
                             username = "Desconhecido"
                             if "sender" in message_data and "username" in message_data["sender"]:
                                 username = message_data["sender"]["username"]
                             
-                            # Imprime a mensagem formatada
                             print(f"[Kick] {username}: {content}")
                         else:
                             if self.DEBUG:
-                                print(f"[DEBUG] Formato de mensagem sem conteúdo: {message_data}")
+                                print(f"[DEBUG] Mensagem sem conteúdo: {message_data}")
                     except json.JSONDecodeError:
                         print(f"[ERRO] Não foi possível decodificar os dados da mensagem: {data['data']}")
                     except Exception as e:
@@ -194,18 +169,17 @@ class KickChat:
             print(f"[ERRO] Erro ao processar mensagem do chat: {e}")
 
     def disconnect(self):
-        """Desconecta do chat"""
+        """Disconnect from chat"""
         if self.ws:
             self.ws.close()
             self.ws = None
         self.is_connected = False
 
     def get_connected(self):
-        """Retorna se está conectado"""
+        """Check if connected"""
         return self.is_connected
 
 
-# Execução principal
 if __name__ == "__main__":
     chat = KickChat("theleaway", "", DEBUG=True)
     
