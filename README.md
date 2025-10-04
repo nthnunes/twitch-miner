@@ -32,6 +32,21 @@ cd twitch-miner
 pip install -r requirements.txt
 ```
 
+## Build/Compilação
+
+Para compilar o projeto em um executável único, use o seguinte comando:
+
+```bash
+pyinstaller -F --collect-all dateutil --collect-all win10toast run.py --onefile --name="TwitchMiner" --noconfirm --noconsole
+```
+
+Este comando irá:
+- Criar um executável único (`-F --onefile`)
+- Incluir todas as dependências do `dateutil` e `win10toast` (`--collect-all`)
+- Nomear o arquivo final como "TwitchMiner" (`--name="TwitchMiner"`)
+- Não mostrar confirmações (`--noconfirm`)
+- Executar sem janela de console (`--noconsole`)
+
 ## Utilização
 
 Execute o aplicativo principal:
