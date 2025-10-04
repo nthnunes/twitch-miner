@@ -1,36 +1,29 @@
-# TwitchMiner
+# Twitch Miner
 
-Um bot automatizado para ganhar pontos do canal em streams da Twitch.
+O Twitch Miner é uma aplicação desktop desenvolvida em Python para automatizar a coleta de pontos do canal em streams da Twitch e streamelements. Com uma interface gráfica moderna e intuitiva, o aplicativo oferece diversas funcionalidades para melhorar a experiência de coleta de pontos.
 
-## Recursos Principais
+## 🚀 Funcionalidades
 
-- Mineração automática de pontos de canais
-- Priorização de streamers favoritos
-- Controle através de uma interface gráfica moderna
-- Execução em segundo plano
+- **Interface Gráfica Moderna**
 
-## Nova Interface Modernizada
+  - Tema escuro/claro configurável
+  - Design responsivo usando CustomTkinter
+  - Execução em segundo plano na bandeja do sistema
+  - Painel de controle intuitivo
 
-A interface do aplicativo foi atualizada usando CustomTkinter para proporcionar uma experiência visual mais moderna, com:
+- **Notificações e Alertas**
 
-- Tema escuro (dark mode) por padrão
-- Botões e elementos com cantos arredondados
-- Esquema de cores baseado na cor oficial da Twitch (#9147ff)
-- Design moderno e consistente
-- Melhor experiência visual mantendo todas as funcionalidades originais
+  - Notificações na área de trabalho
+  - Alertas para menções e respostas nos chats conectados
+  - Integração com serviços como Telegram, Discord e Webhook
+  - Sistema de notificações personalizável
 
-## Instalação
+- **Gerenciamento de Streams**
 
-1. Certifique-se de ter Python 3.7 ou superior instalado
-2. Clone o repositório:
-```
-git clone https://github.com/yourusername/twitch-miner.git
-cd twitch-miner
-```
-3. Instale as dependências:
-```
-pip install -r requirements.txt
-```
+  - Interface gráfica para edição de streams favoritas
+  - Troca de conta Twitch
+  - Priorização inteligente de streams
+  - Acompanhamento de sequências de visualização
 
 ## Build/Compilação
 
@@ -49,87 +42,41 @@ Este comando irá:
 
 ## Utilização
 
-Execute o aplicativo principal:
-```
-python run.py
-```
+  - Coleta automática de drops e recompensas
+  - Gerenciamento de participação em chats
+  - Sistema de apostas e previsões
+  - Acompanhamento de raids
 
-### Configuração de Streamer
+- **Análise de Dados**
 
-1. Vá até a aba "Streams"
-2. Adicione os streamers que você deseja acompanhar
-3. Organize-os por prioridade arrastando e soltando na lista
-4. Clique em "Aplicar alterações" após fazer as alterações
+  - Painel de estatísticas via web (localhost)
+  - Acompanhamento do histórico de pontos ganhos
+  - Análise de desempenho por streamer
+  - Relatórios personalizados
 
-### Configuração de Conta
+- **Segurança e Desempenho**
+  - Execução em segundo plano estável
+  - Verificação SSL configurável
 
-1. Vá até a aba "Conta"
-2. Insira o seu nome de usuário da Twitch
-3. Clique em "Alterar conta Twitch"
+## 💻 Tecnologias Utilizadas
 
-## Planos Disponíveis
+- **Python 3**: Linguagem principal do projeto
+- **CustomTkinter**: Framework para a interface gráfica moderna
+- **Pystray**: Gerenciamento de ícone na bandeja do sistema
+- **Requests/WebSockets**: Comunicação com a API da Twitch
+- **Flask**: Servidor web para o painel de estatísticas
+- **Pandas**: Processamento de dados estatísticos
+- **PIL/Pillow**: Processamento de imagens
+- **Pyinstaller**: Empacotamento da aplicação
 
-### Plano Free
-- Mineração automática de pontos
-- Mineração executada no seu computador
-- Alto uso de CPU
-- Necessário manter o PC ligado
+## 📦 Instalação
 
-### Plano Pro
-- Mineração em nuvem 24/7
-- Não precisa manter o PC ligado
-- Baixo consumo de CPU
-- Suporte prioritário
-- Relatórios detalhados de ganhos
+1. Baixe o instalador
+2. Execute o arquivo de instalação
+3. Siga as instruções do assistente de instalação
+4. O aplicativo será instalado e configurado automaticamente
+5. Você pode optar por iniciar automaticamente com o Windows
 
-## Detalhes Técnicos
+## 🔄 Atualização
 
-O aplicativo usa várias tecnologias:
-- Python 3.7+
-- CustomTkinter para a interface moderna
-- Selenium/Requests para interação com a Twitch
-- Pystray para suporte a ícone na bandeja do sistema
-
-## Funcionalidades
-
-- Mineração automática de pontos em transmissões ao vivo no Twitch.
-- Execução discreta em segundo plano.
-- Configuração fácil e rápida.
-- Inicia automaticamente com o sistema operacional.
-
-## Requisitos
-
-- Windows 10 ou superior.
-- Roda em qualquer torradeira.
-- Conta registrada na Twitch.
-
-## Instalação
-
-Siga os passos abaixo para configurar o TwitchMiner no seu PC:
-
-1. **Download do Arquivo**
-   - Faça o download do arquivo [`TwitchMiner.zip`](https://github.com/nthnunes/twitch-miner/releases/tag/releases) e extraia-o para a pasta `Documentos` (Sim, tem que ser nessa pasta, caso contrário a inicialização automática não irá funcionar).
-
-   ![Extração em Documentos](./tutorial-images/image1.jpeg)
-
-2. **Extração**
-   - Extraia o conteúdo do arquivo zipado. Dentro da pasta extraída, haverá apenas um arquivo principal para rodar o bot.
-
-3. **Execução**
-   - Abra o arquivo extraído e siga os passos de configuração que aparecerão na tela.
-
-4. **Configuração Automática**
-   - Após configurar o bot, reinicie o computador.
-
-5. **Execução em Segundo Plano**
-   - O bot iniciará automaticamente junto com o sistema e minerará pontos em segundo plano.
-
-## Como funciona
-
-O bot é configurado para monitorar as transmissões ao vivo dos canais que forem adicionados e minerar pontos automaticamente. Ele roda silenciosamente em segundo plano e você pode verificá-lo a qualquer momento.
-
-   ![Verificação no Gerenciador de Tarefas](./tutorial-images/image2.png)
-
-## Aviso Legal
-
-Este projeto foi criado apenas para fins educacionais. O uso deste bot em sua conta da Twitch pode violar os Termos de Serviço da plataforma. Use por sua conta e risco :D.
+O Twitch Miner possui um sistema de atualização automática que notifica o usuário quando novas versões estão disponíveis. As atualizações podem ser instaladas com um único clique.
