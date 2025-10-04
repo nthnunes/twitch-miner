@@ -27,7 +27,14 @@ class ConsoleApp(ctk.CTk):
         self.title("TwitchMiner")
         self.geometry("800x600")
         self.minsize(800, 600)
-
+        
+        # Define o ícone da janela
+        try:
+            self.iconbitmap("icons/window.ico")
+        except:
+            # Se não conseguir carregar o ícone, continua sem ele
+            pass
+ 
         # Configurar as cores padrão
         self.accent_color = "#9147ff"  # Roxo da Twitch
         self.accent_hover = "#7a30f3"  # Roxo mais escuro para hover

@@ -111,6 +111,13 @@ def connectUsername():
     root = ctk.CTk()
     root.title("Configuração de Usuário")
     
+    # Define o ícone da janela
+    try:
+        root.iconbitmap("icons/window.ico")
+    except:
+        # Se não conseguir carregar o ícone, continua sem ele
+        pass
+    
     # Propriedades da janela
     window_width = 450
     window_height = 400
