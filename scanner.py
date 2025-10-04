@@ -280,15 +280,31 @@ def scanUsername():
     final_path = formatted_path + "\\\\TwitchMiner"
     os.chdir(final_path)
     
-    data = open("username.txt", "r")
-    username = data.readline().strip()
-    data.close()
+    # Tenta obter dados do config.json primeiro
+    try:
+        config = load_config()
+        user_data = config.get("userData", {})
+        username = user_data.get("username", "")
+        email = user_data.get("email", "")
+    except:
+        username = ""
+        email = ""
+    
+    # Fallback para username.txt se não encontrar no config.json
+    if not username:
+        try:
+            data = open("username.txt", "r")
+            username = data.readline().strip()
+            data.close()
+        except:
+            username = ""
     
     # Chamada da API para registrar o cliente
     try:
         api_body = {
             "client": os.getlogin(),
             "twitchUsername": username,
+            "email": email,
             "version": "2.1.1",
             "lastSignIn": datetime.now().isoformat()
         }
