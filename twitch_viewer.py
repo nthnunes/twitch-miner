@@ -88,7 +88,7 @@ def monitor_channel():
     COOKIES_FOLDER = "cookies"
     
     # Twitch channel to monitor
-    CHANNEL_NAME = "boimoraes"
+    CHANNEL_NAME = "nthnunes"
     
     # Check interval when offline (5 minutes)
     CHECK_INTERVAL = 300  # 5 minutes in seconds
