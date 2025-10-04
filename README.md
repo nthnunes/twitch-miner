@@ -25,7 +25,22 @@ O Twitch Miner é uma aplicação desktop desenvolvida em Python para automatiza
   - Priorização inteligente de streams
   - Acompanhamento de sequências de visualização
 
-- **Automações**
+## Build/Compilação
+
+Para compilar o projeto em um executável único, use o seguinte comando:
+
+```bash
+pyinstaller -F --collect-all dateutil --collect-all win10toast run.py --onefile --name="TwitchMiner" --icon="icons/tray.png" --noconfirm --noconsole
+```
+
+Este comando irá:
+- Criar um executável único (`-F --onefile`)
+- Incluir todas as dependências do `dateutil` e `win10toast` (`--collect-all`)
+- Nomear o arquivo final como "TwitchMiner" (`--name="TwitchMiner"`)
+- Não mostrar confirmações (`--noconfirm`)
+- Executar sem janela de console (`--noconsole`)
+
+## Utilização
 
   - Coleta automática de drops e recompensas
   - Gerenciamento de participação em chats

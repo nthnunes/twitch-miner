@@ -161,7 +161,7 @@ class TwitchChannelPointsMiner:
         current_version, github_version = check_versions()
 
         logger.info(
-            f"Twitch Miner v2.1.0 (feito com ❤️por o tal do nunes)"
+            f"Twitch Miner v2.1.1 (feito com ❤️por o tal do nunes)"
         )
 
         for sign in [signal.SIGINT, signal.SIGSEGV, signal.SIGTERM]:

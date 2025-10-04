@@ -18,13 +18,11 @@ import time
 import logging
 import threading
 import webbrowser
-from scanner import scanStreamers, scanUsername, load_auto_update, save_auto_update, search_updates, connectUsername, createShortcut
+from scanner import scanStreamers, scanUsername, load_auto_update, save_auto_update, search_updates, connectUsername, createShortcut, load_config
 import tkinter as tk
 from ui import display_streamers, display_username
 import pystray
 from PIL import Image
-import requests
-from io import BytesIO
 import ctypes.wintypes
 import queue
 from window_manager import WindowManager, show_window
@@ -45,11 +43,19 @@ final_path = formatted_path + "\\\\TwitchMiner"
 os.chdir(final_path)
 
 auto_update = load_auto_update()
-version = "2.1.0"
+version = "2.1.1"
 
 # Flags para indicar quando abrir as janelas
 open_username_window = False
 open_streamers_window = False
+
+def check_user_data_exists():
+    """Verifica se a chave userData existe no config.json"""
+    try:
+        config = load_config()
+        return "userData" in config and "username" in config.get("userData", {})
+    except:
+        return False
 
 
 def auto_updater():
@@ -62,9 +68,7 @@ def auto_updater():
         time.sleep(86400)
 
 def onBackground():
-    icon_url = "https://8upload.com/image/652f72aea6996/icon-windowed.png"
-    response = requests.get(icon_url)
-    image = Image.open(BytesIO(response.content))
+    image = Image.open("icons/tray.png")
 
     global auto_update
 
@@ -112,8 +116,10 @@ def start_mining(twitch_miner):
     )
 
 if __name__ == "__main__":
-    if not os.path.exists('./username.txt'):
+    if not check_user_data_exists():
         connectUsername()
+
+    if not os.path.exists('./username.txt'):
         createShortcut()
 
     # Inicializa o ícone da bandeja
@@ -127,7 +133,7 @@ if __name__ == "__main__":
 
     # Inicializa o twitch_viewer em uma thread separada
     def run_twitch_viewer():
-        asyncio.run(monitor_channel())
+        monitor_channel()
 
     # Inicializa o ads_viewer em uma thread separada
     def run_ads_viewer():
@@ -231,8 +237,8 @@ if __name__ == "__main__":
     auto_updater_thread.start()
 
     # Inicializa o twitch_viewer em uma thread separada
-    twitch_viewer_thread = threading.Thread(target=run_twitch_viewer, daemon=True)
-    twitch_viewer_thread.start()
+    """ twitch_viewer_thread = threading.Thread(target=run_twitch_viewer, daemon=True)
+    twitch_viewer_thread.start() """
 
     # Inicializa o ads_viewer em uma thread separada
     ads_viewer_thread = threading.Thread(target=run_ads_viewer, daemon=True)

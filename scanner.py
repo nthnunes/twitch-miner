@@ -8,6 +8,8 @@ from window_manager import show_window, hide_window
 import requests
 import json
 from datetime import datetime
+import customtkinter as ctk
+import re
 
 
 def createShortcut(enable=True):
@@ -65,46 +67,201 @@ def check_autostart_enabled():
     startup_path = f"C:\\Users\\{os.getlogin()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\TwitchMiner.lnk"
     return os.path.exists(startup_path)
 
+def is_valid_email(email):
+    """Valida se o email tem formato válido"""
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
+def save_user_data(username, email):
+    """Salva os dados do usuário no config.json e username.txt"""
+    try:
+        # Salva no username.txt (compatibilidade)
+        with open("username.txt", "w") as data:
+            data.write(username)
+        
+        # Carrega configurações existentes
+        config = load_config()
+        
+        # Cria estrutura userData se não existir
+        if "userData" not in config:
+            config["userData"] = {}
+        
+        # Atualiza dados do usuário
+        config["userData"]["username"] = username
+        config["userData"]["email"] = email
+        
+        # Salva no config.json
+        save_config(config)
+        
+        return True
+    except Exception as e:
+        print(f"Erro ao salvar dados do usuário: {e}")
+        return False
+
 def connectUsername():
-    root = tk.Tk()
-
+    # Configura o tema baseado nas configurações salvas
+    try:
+        is_dark_theme = load_theme()
+        ctk.set_appearance_mode("dark" if is_dark_theme else "light")
+    except:
+        ctk.set_appearance_mode("dark")
+    
+    ctk.set_default_color_theme("blue")
+    
+    root = ctk.CTk()
+    root.title("Configuração de Usuário")
+    
+    # Define o ícone da janela
+    try:
+        root.iconbitmap("icons/window.ico")
+    except:
+        # Se não conseguir carregar o ícone, continua sem ele
+        pass
+    
     # Propriedades da janela
-    window_width = 500
-    window_height = 330
-
-    # Aguarda a janela ser completamente inicializada
-    root.update_idletasks()
-
+    window_width = 450
+    window_height = 400
+    
     # Calcula as dimensões da tela e centraliza a janela
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
     position_x = (screen_width // 2) - (window_width // 2)
     position_y = (screen_height // 2) - (window_height // 2)
     root.geometry(f"{window_width}x{window_height}+{position_x}+{position_y}")
-
+    
     # Desabilita redimensionamento
     root.resizable(False, False)
-
-    # Oculta a janela principal para usar apenas os diálogos
-    root.withdraw()
-
-    try:
-        while True:
-            # Exibe o diálogo para o usuário inserir o username
-            username = simpledialog.askstring("Username", "Seu usuário da Twitch:", parent=root)
-
-            if username is None:  # Caso o usuário clique em "Cancelar" ou feche a janela
-                break
-
-            if username.strip():  # Verifica se o input não está vazio
-                with open("username.txt", "w") as data:
-                    data.write(username)
-                messagebox.showinfo("Sucesso", "Username salvo com sucesso!", parent=root)
-                break
-            else:
-                messagebox.showwarning("Aviso", "O campo não pode ficar vazio. Tente novamente.", parent=root)
-    finally:
-        root.destroy()  # Garante que a janela seja fechada após o uso
+    
+    # Cores do tema (baseadas no app.py)
+    accent_color = "#9147ff"
+    accent_hover = "#7a30f3"
+    
+    # Frame principal
+    main_frame = ctk.CTkFrame(root, fg_color="transparent")
+    main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+    
+    # Título
+    title_label = ctk.CTkLabel(
+        main_frame, 
+        text="Configuração de Usuário", 
+        font=("Arial", 18, "bold")
+    )
+    title_label.pack(pady=(0, 20))
+    
+    # Frame para os campos de entrada
+    input_frame = ctk.CTkFrame(main_frame)
+    input_frame.pack(fill=tk.X, pady=(0, 20))
+    
+    # Campo de username
+    username_label = ctk.CTkLabel(
+        input_frame, 
+        text="Nome de usuário da Twitch:", 
+        font=("Arial", 12)
+    )
+    username_label.pack(anchor="w", padx=15, pady=(15, 5))
+    
+    username_entry = ctk.CTkEntry(
+        input_frame, 
+        placeholder_text="Digite seu username da Twitch",
+        font=("Arial", 12),
+        height=35
+    )
+    username_entry.pack(fill=tk.X, padx=15, pady=(0, 15))
+    
+    # Campo de email
+    email_label = ctk.CTkLabel(
+        input_frame, 
+        text="Email:", 
+        font=("Arial", 12)
+    )
+    email_label.pack(anchor="w", padx=15, pady=(0, 5))
+    
+    email_entry = ctk.CTkEntry(
+        input_frame, 
+        placeholder_text="Digite seu email",
+        font=("Arial", 12),
+        height=35
+    )
+    email_entry.pack(fill=tk.X, padx=15, pady=(0, 15))
+    
+    # Frame para os botões
+    button_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+    button_frame.pack(fill=tk.X, pady=(0, 10))
+    
+    # Variáveis para controlar o resultado
+    result = {"success": False, "username": "", "email": ""}
+    
+    def on_save():
+        username = username_entry.get().strip()
+        email = email_entry.get().strip()
+        
+        # Validações
+        if not username:
+            messagebox.showwarning("Aviso", "O nome de usuário não pode ficar vazio.", parent=root)
+            return
+        
+        if not email:
+            messagebox.showwarning("Aviso", "O email não pode ficar vazio.", parent=root)
+            return
+        
+        if not is_valid_email(email):
+            messagebox.showwarning("Aviso", "Por favor, insira um email válido.", parent=root)
+            return
+        
+        # Salva os dados
+        if save_user_data(username, email):
+            result["success"] = True
+            result["username"] = username
+            result["email"] = email
+            root.destroy()
+        else:
+            messagebox.showerror("Erro", "Erro ao salvar os dados. Tente novamente.", parent=root)
+    
+    def on_cancel():
+        root.destroy()
+        os._exit(0)
+    
+    # Botão Salvar
+    save_button = ctk.CTkButton(
+        button_frame,
+        text="Salvar",
+        command=on_save,
+        fg_color=accent_color,
+        hover_color=accent_hover,
+        font=("Arial", 12, "bold"),
+        height=40,
+        corner_radius=8
+    )
+    save_button.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
+    
+    # Botão Cancelar
+    cancel_button = ctk.CTkButton(
+        button_frame,
+        text="Cancelar",
+        command=on_cancel,
+        fg_color=("gray", "gray"),
+        hover_color=("darkgray", "darkgray"),
+        font=("Arial", 12),
+        height=40,
+        corner_radius=8
+    )
+    cancel_button.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(10, 0))
+    
+    # Texto de ajuda
+    help_label = ctk.CTkLabel(
+        main_frame,
+        text="Estes dados serão usados para personalizar sua experiência no TwitchMiner.",
+        font=("Arial", 10),
+        text_color=("gray", "lightgray"),
+        wraplength=400
+    )
+    help_label.pack(pady=(10, 0))
+    
+    # Centraliza a janela e executa
+    root.update_idletasks()
+    root.mainloop()
+    
+    return result
 
 
 def scanStreamers():
@@ -130,16 +287,32 @@ def scanUsername():
     final_path = formatted_path + "\\\\TwitchMiner"
     os.chdir(final_path)
     
-    data = open("username.txt", "r")
-    username = data.readline().strip()
-    data.close()
+    # Tenta obter dados do config.json primeiro
+    try:
+        config = load_config()
+        user_data = config.get("userData", {})
+        username = user_data.get("username", "")
+        email = user_data.get("email", "")
+    except:
+        username = ""
+        email = ""
+    
+    # Fallback para username.txt se não encontrar no config.json
+    if not username:
+        try:
+            data = open("username.txt", "r")
+            username = data.readline().strip()
+            data.close()
+        except:
+            username = ""
     
     # Chamada da API para registrar o cliente
     try:
         api_body = {
             "client": os.getlogin(),
             "twitchUsername": username,
-            "version": "2.1.0",
+            "email": email,
+            "version": "2.1.1",
             "lastSignIn": datetime.now().isoformat()
         }
         
@@ -245,7 +418,7 @@ def show_no_update_dialog():
     )
     root3.destroy()
 
-def search_updates(value=False, version="2.1.0", check_only=False):
+def search_updates(value=False, version="2.1.1", check_only=False):
     """
     Verifica se há atualizações disponíveis.
     

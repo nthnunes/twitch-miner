@@ -27,7 +27,14 @@ class ConsoleApp(ctk.CTk):
         self.title("TwitchMiner")
         self.geometry("800x600")
         self.minsize(800, 600)
-
+        
+        # Define o ícone da janela
+        try:
+            self.iconbitmap("icons/window.ico")
+        except:
+            # Se não conseguir carregar o ícone, continua sem ele
+            pass
+ 
         # Configurar as cores padrão
         self.accent_color = "#9147ff"  # Roxo da Twitch
         self.accent_hover = "#7a30f3"  # Roxo mais escuro para hover
@@ -408,7 +415,7 @@ class ConsoleApp(ctk.CTk):
         title_label.pack(pady=(0, 10), anchor="center")
         
         # Versão
-        version_label = ctk.CTkLabel(content_frame, text="Versão 2.1.0", font=("Arial", 14))
+        version_label = ctk.CTkLabel(content_frame, text="Versão 2.1.1", font=("Arial", 14))
         version_label.pack(pady=(0, 10), anchor="center")
         
         # Desenvolvedor
@@ -567,11 +574,11 @@ class ConsoleApp(ctk.CTk):
                     return True
                 
                 @staticmethod
-                def search_updates(value=False, version="2.1.0", check_only=False):
+                def search_updates(value=False, version="2.1.1", check_only=False):
                     return {
                         "has_update": False,
-                        "current_version": "2.1.0",
-                        "latest_version": "2.1.0",
+                        "current_version": "2.1.1",
+                        "latest_version": "2.1.1",
                         "description": "",
                         "error": False
                     }
@@ -833,7 +840,7 @@ class ConsoleApp(ctk.CTk):
         update_action_label.pack(side=tk.LEFT)
         
         # Versão atual do aplicativo
-        VERSION = "2.1.0"
+        VERSION = "2.1.1"
         
         # Função para buscar atualizações
         def check_for_updates():
