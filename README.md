@@ -37,7 +37,7 @@ pip install -r requirements.txt
 Para compilar o projeto em um executável único, use o seguinte comando:
 
 ```bash
-pyinstaller -F --collect-all dateutil --collect-all win10toast run.py --onefile --name="TwitchMiner" --noconfirm --noconsole
+pyinstaller -F --collect-all dateutil --collect-all win10toast run.py --onefile --name="TwitchMiner" --icon="icons/tray.png" --noconfirm --noconsole
 ```
 
 Este comando irá:
