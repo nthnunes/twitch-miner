@@ -18,7 +18,7 @@ import time
 import logging
 import threading
 import webbrowser
-from scanner import scanStreamers, scanUsername, load_auto_update, save_auto_update, search_updates, connectUsername, createShortcut
+from scanner import scanStreamers, scanUsername, load_auto_update, save_auto_update, search_updates, connectUsername, createShortcut, load_config
 import tkinter as tk
 from ui import display_streamers, display_username
 import pystray
@@ -48,6 +48,14 @@ version = "2.1.1"
 # Flags para indicar quando abrir as janelas
 open_username_window = False
 open_streamers_window = False
+
+def check_user_data_exists():
+    """Verifica se a chave userData existe no config.json"""
+    try:
+        config = load_config()
+        return "userData" in config and "username" in config.get("userData", {})
+    except:
+        return False
 
 
 def auto_updater():
@@ -108,8 +116,10 @@ def start_mining(twitch_miner):
     )
 
 if __name__ == "__main__":
-    if not os.path.exists('./username.txt'):
+    if not check_user_data_exists():
         connectUsername()
+
+    if not os.path.exists('./username.txt'):
         createShortcut()
 
     # Inicializa o ícone da bandeja
