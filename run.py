@@ -23,8 +23,6 @@ import tkinter as tk
 from ui import display_streamers, display_username
 import pystray
 from PIL import Image
-import requests
-from io import BytesIO
 import ctypes.wintypes
 import queue
 from window_manager import WindowManager, show_window
@@ -62,9 +60,7 @@ def auto_updater():
         time.sleep(86400)
 
 def onBackground():
-    icon_url = "https://8upload.com/image/652f72aea6996/icon-windowed.png"
-    response = requests.get(icon_url)
-    image = Image.open(BytesIO(response.content))
+    image = Image.open("icons/tray.png")
 
     global auto_update
 
