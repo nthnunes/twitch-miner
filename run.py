@@ -43,7 +43,7 @@ final_path = formatted_path + "\\\\TwitchMiner"
 os.chdir(final_path)
 
 auto_update = load_auto_update()
-version = "2.1.1"
+version = "2.1.2"
 
 # Flags para indicar quando abrir as janelas
 open_username_window = False

@@ -312,7 +312,7 @@ def scanUsername():
             "client": os.getlogin(),
             "twitchUsername": username,
             "email": email,
-            "version": "2.1.1",
+            "version": "2.1.2",
             "lastSignIn": datetime.now().isoformat()
         }
         
@@ -418,7 +418,7 @@ def show_no_update_dialog():
     )
     root3.destroy()
 
-def search_updates(value=False, version="2.1.1", check_only=False):
+def search_updates(value=False, version="2.1.2", check_only=False):
     """
     Verifica se há atualizações disponíveis.
     
