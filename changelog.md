@@ -1,5 +1,13 @@
 # Changelog - TwitchMiner
 
+## [2.1.2] - 2025-11-11
+
+### 🐛 Correções
+
+- Correção das chamadas GraphQL que passaram a usar `UserByLogin` em vez do payload `ReportMenuItem`, restabelecendo a obtenção de IDs de usuários.
+- Ajuste no fluxo de sincronização de campanhas para tratar respostas inesperadas e limpar o estado após falhas, evitando travamentos.
+
+
 ## [2.1.1] - 2025-10-04
 
 ### ✨ Novas Funcionalidades
