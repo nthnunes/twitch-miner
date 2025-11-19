@@ -76,8 +76,6 @@ def onBackground():
         global auto_update
         if str(query) == "Abrir Painel":
             show_window()
-        elif str(query) == "Ver Estatísticas":
-            webbrowser.open("http://localhost:5000")
         elif str(query) == "Sair":
             icon.stop()
             os._exit(0)
@@ -85,7 +83,6 @@ def onBackground():
     icon = pystray.Icon("TM", image, "TwitchMiner v" + version, 
         menu=pystray.Menu(
             pystray.MenuItem("Abrir Painel", after_click),
-            pystray.MenuItem("Ver Estatísticas", after_click),
             pystray.MenuItem("Sair", after_click)))
     return icon
 
@@ -104,7 +101,7 @@ def open_windows_if_needed():
         pass  # Ignora se a fila estiver vazia
 
 def start_mining(twitch_miner):
-    twitch_miner.analytics(host="localhost", port=5000, refresh=5, days_ago=7)
+    #twitch_miner.analytics(host="localhost", port=5000, refresh=5, days_ago=7)
     
     streamers = scanStreamers() or []
 
