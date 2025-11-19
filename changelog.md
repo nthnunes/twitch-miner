@@ -1,5 +1,35 @@
 # Changelog - TwitchMiner
 
+## [2.1.3] - 2025-11-18
+
+### 🐛 Correções
+
+- **Correção de Duplicação de Streamers nos Slots de Watch**
+  - Corrigido bug onde o mesmo streamer poderia preencher ambos os slots de watch simultaneamente
+  - Substituição de lista por `set()` para evitar duplicatas automaticamente
+  - Adicionada função auxiliar `remaining_watch_amount()` para calcular slots disponíveis de forma mais precisa
+  - Melhorias nas verificações de limite para parar o processamento quando os 2 slots estiverem preenchidos
+  - Refatoração da lógica de seleção de streamers para garantir que apenas 2 streamers únicos sejam selecionados
+
+- **Atualização de Operações GraphQL**
+  - Atualizados os hashes SHA256 das operações `Inventory` e `ViewerDropsDashboard` para versões mais recentes da API da Twitch
+  - Migração de `UserByLogin` para `GetIDFromLogin` usando persisted queries (sha256Hash) em vez de queries explícitas
+  - Atualização das chamadas em `Twitch.py` e `TwitchLogin.py` para usar a nova operação `GetIDFromLogin`
+  - Melhoria na compatibilidade com as mudanças recentes da API GraphQL da Twitch
+
+### 🔧 Melhorias
+
+- **Otimização da Seleção de Streamers**
+  - Uso de `set()` em vez de lista para garantir unicidade dos streamers selecionados
+  - Verificações mais eficientes com `remaining_watch_amount() <= 0` para evitar processamento desnecessário
+  - Código mais limpo e manutenível com constante `max_watch_amount = 2`
+
+- **Atualização da API GraphQL**
+  - Migração para persisted queries (sha256Hash) para operações de obtenção de ID de usuário
+  - Redução do tamanho das requisições GraphQL usando hashes em vez de queries completas
+  - Melhor compatibilidade com as atualizações da API da Twitch
+
+
 ## [2.1.2] - 2025-11-11
 
 ### 🐛 Correções
