@@ -7,31 +7,60 @@ import time
 from playwright.async_api import async_playwright
 from datetime import datetime
 
-def get_urls_from_api():
+# Fallbacks quando a API não retorna view/interval
+DEFAULT_VIEW_DURATION_MIN = 10
+DEFAULT_VIEW_DURATION_MAX = 60
+DEFAULT_INTERVAL_MIN = 3600
+DEFAULT_INTERVAL_MAX = 7200
+
+
+def _parse_int(value, default):
+    """Retorna value como int se for número válido, senão default."""
+    if value is None:
+        return default
+    try:
+        n = int(value)
+        return n if n >= 0 else default
+    except (TypeError, ValueError):
+        return default
+
+
+def get_ads_config_from_api():
     wait_time = 300  # Começar com 5 minutos
     max_wait_time = 7200  # Máximo de 2 horas (120 minutos)
-    
+
     while True:
         try:
-            #print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - INFO - [ads_viewer]: Buscando URLs da API...")
             response = requests.get("https://twitch-miner-api.vercel.app/ads")
-            urls = response.json()
-            
-            # Verificar se o vetor não está vazio
-            if urls and len(urls) > 0:
-                #print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - INFO - [ads_viewer]: Encontradas {len(urls)} URLs")
-                return urls
-            else:
-                #print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - WARNING - [ads_viewer]: API retornou lista vazia")
+            data = response.json()
+
+            # Resposta inválida ou sem urls → tratar como vazio
+            if not isinstance(data, dict):
+                raise Exception("Resposta da API inválida")
+            urls = data.get("urls")
+            if not isinstance(urls, list) or len(urls) == 0:
                 raise Exception("Lista de URLs vazia")
-                
-        except Exception as e:
-            #print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - ERROR - [ads_viewer]: Erro ao buscar URLs da API: {e}")
-            #print(f"{datetime.now().strftime('%d/%m/%y %H:%M:%S')} - INFO - [ads_viewer]: Tentando novamente em {wait_time//60} minutos...")
-            
+
+            view_min = _parse_int(data.get("viewDurationMin"), DEFAULT_VIEW_DURATION_MIN)
+            view_max = _parse_int(data.get("viewDurationMax"), DEFAULT_VIEW_DURATION_MAX)
+            interval_min = _parse_int(data.get("intervalMin"), DEFAULT_INTERVAL_MIN)
+            interval_max = _parse_int(data.get("intervalMax"), DEFAULT_INTERVAL_MAX)
+
+            # Garantir min <= max
+            if view_min > view_max:
+                view_min, view_max = view_max, view_min
+            if interval_min > interval_max:
+                interval_min, interval_max = interval_max, interval_min
+
+            return {
+                "urls": urls,
+                "viewDurationMin": view_min,
+                "viewDurationMax": view_max,
+                "intervalMin": interval_min,
+                "intervalMax": interval_max,
+            }
+        except Exception:
             time.sleep(wait_time)
-            
-            # Dobrar o tempo de espera para a próxima tentativa, respeitando o máximo
             wait_time = min(wait_time * 2, max_wait_time)
 
 def get_chromium_path():
@@ -46,10 +75,8 @@ def get_chromium_path():
     
     return chromium_path
 
-async def open_link(urls):
-    # Escolher URL aleatória da lista
+async def open_link(urls, view_duration_min, view_duration_max):
     url = random.choice(urls)
-    #print(f"URL selecionada: {url}")
     
     async with async_playwright() as p:
         chromium_path = get_chromium_path()
@@ -70,18 +97,20 @@ async def open_link(urls):
             '--no-default-browser-check',
             '--disable-default-apps'
         ]
+
+        HEADLESS = True
         
         if chromium_path and os.path.exists(chromium_path):
             # Usar o Chromium empacotado
             browser = await p.chromium.launch(
-                headless=True,
+                headless=HEADLESS,
                 executable_path=chromium_path,
                 args=args
             )
         else:
             # Usar o Chromium padrão do Playwright
             browser = await p.chromium.launch(
-                headless=True,
+                headless=HEADLESS,
                 args=args
             )
         
@@ -122,10 +151,7 @@ async def open_link(urls):
         
         try:
             await page.goto(url)
-            
-            # Aguardar entre 10 e 30 segundos na página
-            wait_time = random.randint(10, 30)
-            #print(f"Aguardando {wait_time} segundos...")
+            wait_time = random.randint(view_duration_min, view_duration_max)
             await asyncio.sleep(wait_time)
             
         except Exception as e:
@@ -135,16 +161,16 @@ async def open_link(urls):
         await browser.close()
 
 async def run_loop():
-    # Buscar URLs da API apenas uma vez
-    urls = get_urls_from_api()
-    
+    config = get_ads_config_from_api()
+    urls = config["urls"]
+    view_min = config["viewDurationMin"]
+    view_max = config["viewDurationMax"]
+    interval_min = config["intervalMin"]
+    interval_max = config["intervalMax"]
+
     while True:
-        #print("Abrindo página...")
-        await open_link(urls)
-        
-        # Aguardar entre 30 segundos e 1 minuto e meio antes de repetir
-        interval = random.randint(30, 60)
-        #print(f"Aguardando {interval%60} segundos para próxima execução...")
+        await open_link(urls, view_min, view_max)
+        interval = random.randint(interval_min, interval_max)
         await asyncio.sleep(interval)
 
 """ if __name__ == "__main__":
