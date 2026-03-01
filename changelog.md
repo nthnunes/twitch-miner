@@ -1,5 +1,17 @@
 # Changelog - TwitchMiner
 
+## [2.1.4] - 2026-03-01
+
+### 🔧 Melhorias
+
+- **Tratamento da API de Ads**
+  - Suporte ao novo formato de resposta da API
+  - Tempo de permanência na página e intervalo entre aberturas configuráveis via API
+  - Tratamento de URLs vazias ou falha da API
+
+- **Refatoração da Interface e Analytics**
+  - Remoção do menu de analytics da interface
+
 ## [2.1.3] - 2025-11-18
 
 ### 🐛 Correções
