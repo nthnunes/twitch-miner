@@ -85,6 +85,7 @@ class TwitchChannelPointsMiner:
         logger_settings: LoggerSettings = LoggerSettings(),
         # Default values for all streamers
         streamer_settings: StreamerSettings = StreamerSettings(),
+        bypass_signals: bool = False,
     ):
         # Fixes TypeError: 'NoneType' object is not subscriptable
         if not username or username == "your-twitch-username":
@@ -164,8 +165,9 @@ class TwitchChannelPointsMiner:
             f"Twitch Miner v2.1.4 (feito com ❤️por o tal do nunes)"
         )
 
-        for sign in [signal.SIGINT, signal.SIGSEGV, signal.SIGTERM]:
-            signal.signal(sign, self.end)
+        if not bypass_signals:
+            for sign in [signal.SIGINT, signal.SIGSEGV, signal.SIGTERM]:
+                signal.signal(sign, self.end)
 
     def analytics(
         self,
@@ -187,7 +189,7 @@ class TwitchChannelPointsMiner:
                 username=self.username,
             )
             http_server.daemon = True
-            http_server.name = "Analytics Thread"
+            http_server.name = f"Analytics Thread-{self.username}"
             http_server.start()
         else:
             logger.error("Can't start analytics(), please set enable_analytics=True")
@@ -314,7 +316,7 @@ class TwitchChannelPointsMiner:
                     target=self.twitch.sync_campaigns,
                     args=(self.streamers,),
                 )
-                self.sync_campaigns_thread.name = "Sync campaigns/inventory"
+                self.sync_campaigns_thread.name = f"Sync campaigns/inventory-{self.username}"
                 self.sync_campaigns_thread.start()
                 time.sleep(30)
 
@@ -322,7 +324,7 @@ class TwitchChannelPointsMiner:
                 target=self.twitch.send_minute_watched_events,
                 args=(self.streamers, self.priority),
             )
-            self.minute_watcher_thread.name = "Minute watcher"
+            self.minute_watcher_thread.name = f"Minute watcher-{self.username}"
             self.minute_watcher_thread.start()
 
             self.ws_pool = WebSocketsPool(

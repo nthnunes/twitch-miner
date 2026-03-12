@@ -82,7 +82,7 @@ class WebSocketsPool:
         else:
             thread_ws = Thread(target=lambda: self.ws[index].run_forever())
         thread_ws.daemon = True
-        thread_ws.name = f"WebSocket #{self.ws[index].index}"
+        thread_ws.name = f"WebSocket #{self.ws[index].index}-{self.twitch.twitch_login.username}"
         thread_ws.start()
 
     def end(self):
@@ -114,6 +114,7 @@ class WebSocketsPool:
 
         thread_ws = Thread(target=run)
         thread_ws.daemon = True
+        thread_ws.name = f"WebSocket #{ws.index}-{ws.twitch.twitch_login.username}"
         thread_ws.start()
 
     @staticmethod

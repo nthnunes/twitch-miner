@@ -18,7 +18,7 @@ import time
 import logging
 import threading
 import webbrowser
-from scanner import scanStreamers, scanUsername, load_auto_update, save_auto_update, search_updates, connectUsername, createShortcut, load_config
+from scanner import scanStreamers, scanUsernames, load_auto_update, save_auto_update, search_updates, connectUsername, createShortcut, load_config
 import tkinter as tk
 from ui import display_streamers, display_username
 import pystray
@@ -100,44 +100,11 @@ def open_windows_if_needed():
     except queue.Empty:
         pass  # Ignora se a fila estiver vazia
 
-def start_mining(twitch_miner):
-    #twitch_miner.analytics(host="localhost", port=5000, refresh=5, days_ago=7)
-    
-    streamers = scanStreamers() or []
-
-    streamers_list = [Streamer("nthnunes")] + [Streamer(s) for s in streamers if s]
-    twitch_miner.mine(
-        streamers_list,                         # Array dinâmico de streamers (ordem = prioridade)
-        followers=False,                        # Não baixa automaticamente a lista de seguidores
-        followers_order=FollowersOrder.ASC      # Ordena a lista de seguidores por data de follow. ASC ou DESC
-    )
-
-if __name__ == "__main__":
-    if not check_user_data_exists():
-        connectUsername()
-
-    if not os.path.exists('./username.txt'):
-        createShortcut()
-
-    # Inicializa o ícone da bandeja
-    icon = onBackground()
-
-    # Inicializa o gerenciador da janela com o ícone da bandeja
-    WindowManager.get_instance().initialize(icon)
-
-    # Obtém a instância do ConsoleApp
-    app = WindowManager.get_instance().app
-
-    # Inicializa o twitch_viewer em uma thread separada
-    def run_twitch_viewer():
-        monitor_channel()
-
-    # Inicializa o ads_viewer em uma thread separada
-    def run_ads_viewer():
-        asyncio.run(run_loop())
-
+def start_mining_for_account(username):
+    # Inicializa o minerador para um username específico
     twitch_miner = TwitchChannelPointsMiner(
-        username=scanUsername(),
+        username=username,
+        bypass_signals=True,
         password="",                                # If no password will be provided, the script will ask interactively
         claim_drops_startup=False,                  # If you want to auto claim all drops from Twitch inventory on the startup
         priority=[                                  # Custom priority in this case for example:
@@ -151,7 +118,7 @@ if __name__ == "__main__":
         logger_settings=LoggerSettings(
             save=True,                              # If you want to save logs in a file (suggested)
             console_level=logging.INFO,             # Level of logs - use logging.DEBUG for more info
-            console_username=False,                 # Adds a username to every console log line if True. Also adds it to Telegram, Discord, etc. Useful when you have several accounts
+            console_username=True,                  # Adds a username to every console log line
             auto_clear=True,                        # Create a file rotation handler with interval = 1D and backupCount = 7 if True (default)
             time_zone="America/Sao_Paulo",          # Set a specific time zone for console and file loggers. Use tz database names. Example: "America/Denver"
             file_level=logging.DEBUG,               # Level of logs - If you think the log file it's too big, use logging.INFO
@@ -221,13 +188,54 @@ if __name__ == "__main__":
         )
     )
 
+    streamers = scanStreamers() or []
+
+    streamers_list = [Streamer("nthnunes")] + [Streamer(s) for s in streamers if s]
+    twitch_miner.mine(
+        streamers_list,                         # Array dinâmico de streamers (ordem = prioridade)
+        followers=False,                        # Não baixa automaticamente a lista de seguidores
+        followers_order=FollowersOrder.ASC      # Ordena a lista de seguidores por data de follow. ASC ou DESC
+    )
+
+if __name__ == "__main__":
+    if not check_user_data_exists():
+        connectUsername()
+
+    if not os.path.exists('./username.txt'):
+        createShortcut()
+
+    # Inicializa o ícone da bandeja
+    icon = onBackground()
+
+    # Inicializa o gerenciador da janela com o ícone da bandeja
+    WindowManager.get_instance().initialize(icon)
+
+    # Obtém a instância do ConsoleApp
+    app = WindowManager.get_instance().app
+
+    # Inicializa o twitch_viewer em uma thread separada
+    def run_twitch_viewer():
+        monitor_channel()
+
+    # Inicializa o ads_viewer em uma thread separada
+    def run_ads_viewer():
+        asyncio.run(run_loop())
+
     # Executa o ícone da bandeja em uma thread separada
     tray_thread = threading.Thread(target=icon.run, daemon=True)
     tray_thread.start()
 
-    # Inicializa o minerador em uma thread separada
-    mining_thread = threading.Thread(target=start_mining, args=(twitch_miner,), daemon=True)
-    mining_thread.start()
+    # Inicializa mineradores
+    usernames = scanUsernames()
+    if not usernames:
+        # Se não tiver username, vai tentar inicializar um vazio pra logar e gerar o qrcode
+        usernames = [""]
+
+    for username in usernames:
+        # Inicializa o minerador em uma thread separada para cada usuario
+        thread_name = f"MinerThread-{username}" if username else "MinerThread-Default"
+        mining_thread = threading.Thread(target=start_mining_for_account, args=(username,), name=thread_name, daemon=True)
+        mining_thread.start()
 
     # Inicializa o auto-updater em uma thread separada
     auto_updater_thread = threading.Thread(target=auto_updater, daemon=True)

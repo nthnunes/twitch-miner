@@ -112,6 +112,7 @@ class ThreadChat(Thread):
         self.notification_toaster = notification_toaster if notification_toaster else toaster
 
         self.chat_irc = None
+        self.name = f"ThreadChat-{self.username}"
 
     def run(self):
         # Passa o objeto toaster recebido pelo ThreadChat para ClientIRC

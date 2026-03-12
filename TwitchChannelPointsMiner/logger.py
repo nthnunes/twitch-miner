@@ -277,6 +277,17 @@ class GlobalFormatter(logging.Formatter):
             self.settings.gotify.send(record.msg, record.event)
 
 
+class MinerFilter(logging.Filter):
+    def __init__(self, username):
+        super().__init__()
+        self.username = username
+
+    def filter(self, record):
+        if not record.threadName:
+            return False
+        # Catch MinerThread-{username} and any Custom Thread ending with -{username}
+        return record.threadName.endswith(f"-{self.username}") or record.threadName == f"MinerThread-{self.username}"
+
 def configure_loggers(username, settings):
     if settings.colored is True:
         init(autoreset=True)
@@ -284,6 +295,8 @@ def configure_loggers(username, settings):
     # Queue handler that will handle the logger queue
     logger_queue = queue.Queue(-1)
     queue_handler = QueueHandler(logger_queue)
+    queue_handler.addFilter(MinerFilter(username))
+    
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
     # Add the queue handler to the root logger
@@ -350,10 +363,14 @@ def configure_loggers(username, settings):
             logger_queue, file_handler, console_handler, respect_handler_level=True
         )
         queue_listener.start()
+        if queue_listener._thread:
+            queue_listener._thread.name = f"QueueListener-{username}"
         return logs_file, queue_listener
     else:
         queue_listener = QueueListener(
             logger_queue, console_handler, respect_handler_level=True
         )
         queue_listener.start()
+        if queue_listener._thread:
+            queue_listener._thread.name = f"QueueListener-{username}"
         return None, queue_listener

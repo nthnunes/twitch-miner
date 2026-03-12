@@ -131,40 +131,62 @@ def display_streamers(root):
 
 
 
-# Função para carregar o nome de usuário do arquivo
-def load_username():
+# Function to load usernames from the file
+def load_usernames():
     try:
-        with open("username.txt", "r") as file:
-            username = file.readline().strip()
-        return username
+        with open("usernames.txt", "r") as file:
+            return [line.strip() for line in file.readlines() if line.strip()]
     except FileNotFoundError:
-        messagebox.showerror("Erro", "Arquivo 'username.txt' não encontrado.")
-        return ""
+        return []
 
-# Função para atualizar o nome de usuário no arquivo e fechar a janela
-def change_username(root):
+# Function to save usernames to the file
+def save_usernames(usernames):
+    with open("usernames.txt", "w") as file:
+        for username in usernames:
+            file.write(f"{username}\n")
+
+# Function to refresh usernames listbox
+def refresh_username_listbox():
+    username_listbox.delete(0, END)
+    usernames = load_usernames()
+    for index, username in enumerate(usernames, start=1):
+        username_listbox.insert(END, f"{username}")
+
+# Function to add a new username
+def add_username():
     new_username = username_entry.get().strip()
     if new_username:
-        # Salvando o novo nome de usuário no arquivo
-        with open("username.txt", "w") as file:
-            file.write(new_username)
-        
-        # Exibindo uma mensagem de confirmação
-        messagebox.showinfo("Alteração de Conta", f"Conta alterada para: {new_username}\n\nPara as alterações surtirem efeito reinicie o bot.")
-        
-        # Fechando a janela principal
-        root.destroy()
+        username_listbox.insert(END, f"{new_username}")
+        username_entry.delete(0, END)
+        save_usernames(username_listbox.get(0, END))
     else:
         messagebox.showwarning("Erro", "O nome de usuário não pode estar vazio.")
 
+# Function to remove the selected username
+def remove_username():
+    try:
+        selected_index = username_listbox.curselection()[0]
+        username_listbox.delete(selected_index)
+        save_usernames(username_listbox.get(0, END))
+        refresh_username_listbox()
+    except IndexError:
+        messagebox.showwarning("Erro", "Selecione uma conta para removê-la.")
+
+# Function to save accounts and close
+def change_username(root):
+    # This is slightly misleading name now as it saves multiple, but kept for compatibility
+    save_usernames(username_listbox.get(0, END))
+    messagebox.showinfo("Alteração de Conta", "Contas alteradas! Para as alterações surtirem efeito reinicie o bot.")
+    root.destroy()
+
 # Função principal para exibir a interface
 def display_username(root):
-    global username_entry
-    root.title("Alterar Conta Twitch")
+    global username_entry, username_listbox
+    root.title("Alterar Contas Twitch")
 
     # Definindo o tamanho da janela
-    window_width = 400
-    window_height = 180
+    window_width = 450
+    window_height = 350
 
     # Calculando a posição para centralizar a janela
     screen_width = root.winfo_screenwidth()
@@ -173,28 +195,38 @@ def display_username(root):
     position_y = (screen_height // 2) - (window_height // 2)
     root.geometry(f"{window_width}x{window_height}+{position_x}+{position_y}")
 
-    # Carregando o nome de usuário do arquivo
-    username = load_username()
+    main_frame = Frame(root)
+    main_frame.pack(padx=10, pady=10)
 
-    # Rótulo para o campo de entrada
-    username_label = Label(root, text="Seu nome de usuário:")
-    username_label.pack(pady=(10, 5))
+    # Label for the title
+    title_label = Label(main_frame, text="Contas Twitch conectadas:", font=("Arial", 12, "bold"))
+    title_label.grid(row=0, column=0, columnspan=2, pady=(0, 10), sticky="w")
 
-    # Frame para o campo de entrada, com espaçamento lateral
-    entry_frame = Frame(root)
-    entry_frame.pack(padx=20)  # Espaçamento lateral
+    # Creating the Listbox to display usernames
+    username_listbox = Listbox(main_frame, width=30, height=10)
+    username_listbox.grid(row=1, column=0, rowspan=4, padx=(0, 10), pady=5)
 
-    # Campo de entrada para o nome de usuário
-    username_entry = Entry(entry_frame, width=30)
-    username_entry.pack(pady=5)
-    username_entry.insert(0, username)  # Inserindo o nome de usuário carregado
+    # Populating the listbox initially
+    refresh_username_listbox()
 
-    # Botão para alterar a conta
-    change_button = Button(root, text="Alterar conta Twitch", command=lambda: change_username(root))
-    change_button.pack(pady=10)
+    # Entry field to add a new username
+    username_entry = Entry(main_frame, width=25)
+    username_entry.grid(row=1, column=1, pady=(5, 0), sticky="w")
+
+    # Button to add a new username
+    add_button = Button(main_frame, text="Adicionar Conta", command=add_username)
+    add_button.grid(row=2, column=1, pady=(5, 0), sticky="ew")
+
+    # Button to remove a selected username
+    remove_button = Button(main_frame, text="Remover Conta", command=remove_username)
+    remove_button.grid(row=3, column=1, pady=5, sticky="ew")
+
+    # Button to save and restart the bot
+    restart_button = Button(main_frame, text="Salvar e Sair", command=lambda: change_username(root))
+    restart_button.grid(row=4, column=1, pady=5, sticky="ew")
 
     # Texto de observação abaixo do botão
-    obs_label = Label(root, text="Observação: Ao alterar seu nome de usuário na Twitch, o bot será reiniciado, e você precisará fazer login com o novo usuário.", font=("Arial", 8), wraplength=350, justify="left")
+    obs_label = Label(root, text="Observação: Ao alterar suas contas, o bot precisará ser reiniciado, e você fará o login no terminal.", font=("Arial", 8), wraplength=400, justify="center")
     obs_label.pack(pady=(5, 10), padx=20)
 
     root.mainloop()

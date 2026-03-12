@@ -53,6 +53,8 @@ class ConsoleApp(ctk.CTk):
         self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.main_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
+        self.console_outputs = {} # Dict to hold Textboxes per account
+        
         # Criação das abas
         self.console_frame = self.create_console_tab()
         self.streams_frame = self.create_streams_tab()
@@ -120,7 +122,9 @@ class ConsoleApp(ctk.CTk):
         sys.stderr = self
 
     def write(self, message):
-        self.queue.put(message)
+        import threading
+        thread_name = threading.current_thread().name
+        self.queue.put((thread_name, message))
 
     def flush(self):
         pass
@@ -128,11 +132,36 @@ class ConsoleApp(ctk.CTk):
     def update_console(self):
         while not self.queue.empty():
             try:
-                message = self.queue.get_nowait()
-                self.console_output.configure(state=tk.NORMAL)
-                self.console_output.insert(tk.END, message)
-                self.console_output.configure(state=tk.DISABLED)
-                self.console_output.see(tk.END)  # Rolagem automática
+                thread_name, message = self.queue.get_nowait()
+                
+                # Determine account target based on thread name suffix
+                target_account_name = None
+                
+                # Check if the thread name ends with -{account_name} 
+                # e.g., "MinerThread-nthnunes", "WebSocket #0-nthnunes", "QueueListener-nthnunes"
+                for account_name in self.console_outputs.keys():
+                    if account_name != "Geral" and thread_name.endswith(f"-{account_name}"):
+                        target_account_name = account_name
+                        break
+                
+                # Uncondicionalmente joga na Geral
+                geral_textbox = self.console_outputs["Geral"]
+                geral_textbox.configure(state=tk.NORMAL)
+                geral_textbox.insert(tk.END, message)
+                geral_textbox.configure(state=tk.DISABLED)
+                geral_textbox.see(tk.END)
+                
+                # Se também for de uma conta específica, altera a mensagem e joga nela
+                if target_account_name and target_account_name in self.console_outputs:
+                    # Remove a tag [account_name] do print para deixar limpo na aba específica
+                    clean_message = message.replace(f"[{target_account_name}] ", "")
+                    # No caso de já vir limpo do logger (em outras origens), mantem igual
+                    
+                    account_textbox = self.console_outputs[target_account_name]
+                    account_textbox.configure(state=tk.NORMAL)
+                    account_textbox.insert(tk.END, clean_message)
+                    account_textbox.configure(state=tk.DISABLED)
+                    account_textbox.see(tk.END)
             except queue.Empty:
                 break
         self.after(100, self.update_console)
@@ -181,7 +210,7 @@ class ConsoleApp(ctk.CTk):
         streams_btn.pack(pady=8, fill=tk.X)
         
         # Botão de conta com destaque
-        account_btn = make_button("Conta", lambda: self.show_tab("account"), self.account_icon)
+        account_btn = make_button("Contas", lambda: self.show_tab("account"), self.account_icon)
         account_btn.pack(pady=8, fill=tk.X)
 
         user_btn = make_button("Addons", lambda: self.show_tab("user"), self.user_icon)
@@ -194,19 +223,49 @@ class ConsoleApp(ctk.CTk):
         about_btn.pack(pady=8, fill=tk.X)
 
     def create_console_tab(self):
-        """Cria o conteúdo da aba do console."""
+        """Cria o conteúdo da aba do console com suporte a múltiplas abas."""
         frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         frame.pack(fill=tk.BOTH, expand=True)
 
-        # Use a customtkinter textbox with a scrollbar
-        self.console_output = ctk.CTkTextbox(
-            frame, 
+        self.tabview = ctk.CTkTabview(
+            frame,
+            segmented_button_selected_color=self.accent_color,
+            segmented_button_selected_hover_color=self.accent_hover
+        )
+        self.tabview.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.tabview._segmented_button.configure(corner_radius=25)
+        
+        # Aba Geral
+        self.tabview.add("Geral")
+        geral_textbox = ctk.CTkTextbox(
+            self.tabview.tab("Geral"), 
             wrap="word", 
             state=tk.DISABLED, 
             font=("Segoe UI", 12),
             text_color=("black", "white")
         )
-        self.console_output.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        geral_textbox.pack(fill=tk.BOTH, expand=True)
+        self.console_outputs["Geral"] = geral_textbox
+
+        # Adicionar abas para cada conta configurada
+        try:
+            sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+            import scanner
+            usernames = scanner.scanUsernames()
+            for username in usernames:
+                if username and username not in self.console_outputs:
+                    self.tabview.add(username)
+                    acc_textbox = ctk.CTkTextbox(
+                        self.tabview.tab(username), 
+                        wrap="word", 
+                        state=tk.DISABLED, 
+                        font=("Segoe UI", 12),
+                        text_color=("black", "white")
+                    )
+                    acc_textbox.pack(fill=tk.BOTH, expand=True)
+                    self.console_outputs[username] = acc_textbox
+        except:
+            pass
 
         return frame
 
@@ -352,7 +411,7 @@ class ConsoleApp(ctk.CTk):
         return frame
     
     def create_account_tab(self):
-        """Cria o conteúdo da aba de conta Twitch."""
+        """Cria o conteúdo da aba de conta Twitch com suporte a múltiplas contas."""
         frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         frame.pack(fill=tk.BOTH, expand=True)
 
@@ -361,44 +420,137 @@ class ConsoleApp(ctk.CTk):
         content_frame.pack(side=tk.LEFT, fill=tk.BOTH, padx=20, pady=20, anchor="nw")
 
         # Rótulo para exibir o nome atual
-        title_label = ctk.CTkLabel(content_frame, text="Alterar conta Twitch", font=("Arial", 14, "bold"))
+        title_label = ctk.CTkLabel(content_frame, text="Alterar Contas Twitch", font=("Arial", 14, "bold"))
         title_label.pack(pady=(0, 10), anchor="w")
 
-        # Campo para entrada do nome de usuário
-        username_label = ctk.CTkLabel(content_frame, text="Nome de usuário atual:", font=("Arial", 12))
-        username_label.pack(pady=(5, 10), anchor="w")
+        instruction_label = ctk.CTkLabel(content_frame, text="Adicione as contas que o bot irá minerar simultaneamente.", font=("Arial", 12))
+        instruction_label.pack(pady=(0, 10), anchor="w")
 
-        # Exibe o nome atual
-        current_username = self.load_username()
-        username_entry = ctk.CTkEntry(content_frame, width=300, font=("Arial", 12))
-        username_entry.pack(pady=(5, 10), anchor="w")
-        username_entry.insert(0, current_username)
+        # Container flex para a lista e controles
+        flex_container = ctk.CTkFrame(content_frame, fg_color="transparent")
+        flex_container.pack(fill=tk.BOTH, expand=True)
 
-        # Botão para salvar o novo nome de usuário
-        change_button = ctk.CTkButton(
-            content_frame,
-            text="Alterar conta Twitch",
-            font=("Arial", 12),
-            command=lambda: self.change_username(username_entry.get()),
+        # Frame para a listbox (lado esquerdo)
+        list_frame = ctk.CTkFrame(flex_container, fg_color="transparent")
+        list_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
+        
+        # Definir cores baseadas no tema atual
+        bg_color = "#212121" if ctk.get_appearance_mode().lower() == "dark" else "#f0f0f0"
+        fg_color = "white" if ctk.get_appearance_mode().lower() == "dark" else "black"
+        
+        # Listbox para exibir contas
+        self.accounts_listbox = tk.Listbox(
+            list_frame, 
+            width=30, 
+            height=15, 
+            bg=bg_color, 
+            fg=fg_color,
+            selectbackground="#9147ff",
+            borderwidth=1,
+            relief="solid"
+        )
+        self.accounts_listbox.pack(fill=tk.BOTH, expand=True)
+
+        # Frame para os controles (lado direito)
+        controls_frame = ctk.CTkFrame(flex_container, fg_color="transparent")
+        controls_frame.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 0))
+
+        # Container para entrada de texto
+        add_frame = ctk.CTkFrame(controls_frame, fg_color="transparent")
+        add_frame.pack(fill=tk.X, pady=(0, 10))
+
+        # Label para o prefixo do nome
+        account_label = ctk.CTkLabel(add_frame, text="Seu Usuário:", font=("Arial", 12))
+        account_label.pack(side=tk.LEFT, padx=(5, 5))
+
+        # Campo de entrada para adicionar conta
+        entry = ctk.CTkEntry(add_frame, width=150, font=("Arial", 12))
+        entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+
+        # Funções para adicionar e remover contas
+        def add_account(listbox, entry_widget):
+            new_username = entry_widget.get().strip()
+            if not new_username:
+                return
+                
+            try:
+                import scanner
+                usernames = scanner.scanUsernames()
+                if new_username not in usernames:
+                    usernames.append(new_username)
+                    scanner.saveUsernames(usernames)
+                    listbox.insert(tk.END, new_username)
+                    entry_widget.delete(0, tk.END)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Erro ao adicionar conta: {e}")
+
+        def remove_account(listbox):
+            selection = listbox.curselection()
+            if not selection:
+                return
+                
+            index = selection[0]
+            account_to_remove = listbox.get(index)
+            
+            try:
+                import scanner
+                usernames = scanner.scanUsernames()
+                if account_to_remove in usernames:
+                    usernames.remove(account_to_remove)
+                    scanner.saveUsernames(usernames)
+                    listbox.delete(index)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Erro ao remover conta: {e}")
+
+        # Botão para adicionar conta
+        add_button = ctk.CTkButton(
+            controls_frame, 
+            text="Adicionar conta", 
+            command=lambda: add_account(self.accounts_listbox, entry),
             corner_radius=8,
             fg_color=self.accent_color,
-            hover_color=self.accent_hover
+            hover_color=self.accent_hover,
+            font=("Arial", 12)
         )
-        change_button.pack(pady=(10, 10), anchor="w")
+        add_button.pack(fill=tk.X, pady=(0, 10), padx=5)
 
-        # Texto de observação
-        obs_label = ctk.CTkLabel(
-            content_frame,
-            text=(
-                "Observação: Ao alterar seu nome de usuário na Twitch, o bot será reiniciado, "
-                "e você precisará fazer login com o novo usuário."
-            ),
-            font=("Arial", 10),
-            wraplength=500,
-            justify="left",
+        # Botão para remover conta
+        remove_button = ctk.CTkButton(
+            controls_frame, 
+            text="Remover selecionada", 
+            command=lambda: remove_account(self.accounts_listbox),
+            corner_radius=8,
+            fg_color=self.neutral_color,
+            hover_color=self.neutral_hover,
+            text_color=("black", "white"),
+            font=("Arial", 12)
         )
-        obs_label.pack(pady=(5, 10), anchor="w")
+        remove_button.pack(fill=tk.X, pady=(0, 10), padx=5)
 
+        # Botão para aplicar alterações
+        restart_button = ctk.CTkButton(
+            controls_frame, 
+            text="Aplicar alterações", 
+            command=lambda: self.restart_bot(),
+            corner_radius=8,
+            fg_color=self.neutral_color,
+            hover_color=self.neutral_hover,
+            text_color="white",
+            font=("Arial", 12)
+        )
+        restart_button.pack(fill=tk.X, pady=(0, 10), padx=5)
+
+        # Inicializa as contas na Listbox
+        try:
+            import scanner
+            usernames = scanner.scanUsernames()
+            for usr in usernames:
+                self.accounts_listbox.insert(tk.END, usr)
+        except:
+            pass
+            
         return frame
 
     def create_about_tab(self):
@@ -1058,27 +1210,30 @@ class ConsoleApp(ctk.CTk):
         except IndexError:
             tk.messagebox.showwarning("Aviso", "Por favor, selecione um streamer da lista para ver sua loja StreamElements.")
 
-    # Função para carregar o nome de usuário do arquivo
-    def load_username(self):
-        try:
-            with open("username.txt", "r") as file:
-                return file.readline().strip()
-        except FileNotFoundError:
-            tk.messagebox.showerror("Erro", "Arquivo 'username.txt' não encontrado.")
-            return ""
+    # Function to simulate restarting the bot
+    def restart_bot(self):
+        # Exibindo uma mensagem de confirmação
+        tk.messagebox.showinfo("Alteração bem-sucedida", f"Para as alterações surtirem efeito reinicie o bot.")
 
-    # Função para alterar o nome de usuário
-    def change_username(self, new_username):
-        if new_username.strip():
-            # Salva o novo nome de usuário no arquivo
-            with open("username.txt", "w") as file:
-                file.write(new_username)
-            tk.messagebox.showinfo(
-                "Alteração de Conta",
-                f"Conta alterada para: {new_username}\n\nPara as alterações surtirem efeito reinicie o bot.",
-            )
-        else:
-            tk.messagebox.showwarning("Erro", "O nome de usuário não pode estar vazio.")
+    def open_streamelements_store(self, listbox):
+        """Abre a loja StreamElements do streamer selecionado."""
+        try:
+            # Verifica se há um streamer selecionado
+            selected_index = listbox.curselection()[0]
+            selected_item = listbox.get(selected_index)
+            
+            # Remove a numeração para obter apenas o nome do streamer
+            streamer_name = selected_item.split(". ", 1)[1]
+            
+            # Constrói a URL da loja StreamElements
+            store_url = f"https://streamelements.com/{streamer_name}/store"
+            
+            # Abre a URL no navegador padrão
+            import webbrowser
+            webbrowser.open(store_url)
+            
+        except IndexError:
+            tk.messagebox.showwarning("Aviso", "Por favor, selecione um streamer da lista para ver sua loja StreamElements.")
 
     def update_listbox_colors(self):
         """Atualiza as cores da listbox de streams conforme o tema atual"""
