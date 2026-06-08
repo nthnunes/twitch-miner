@@ -275,7 +275,7 @@ def scanStreamers():
         return streamers
         
 
-def scanUsernames():
+def scanUsername():
     CSIDL_PERSONAL = 5       # My Documents
     SHGFP_TYPE_CURRENT = 0   # Get current, not default value
 
@@ -287,59 +287,27 @@ def scanUsernames():
     final_path = formatted_path + "\\\\TwitchMiner"
     os.chdir(final_path)
     
-    usernames = []
-    
-    # 1. Tenta carregar do config.json primeiro (nova abordagem primária para multi-conta)
-    config_usernames = get_config_value("usernames", [])
-    if isinstance(config_usernames, list) and len(config_usernames) > 0:
-        usernames = config_usernames
-
-    # 2. Se não encontrou no config.json, tenta migrar de origens legadas
-    if not usernames:
-        # 2a. Tenta carregar os usernames.txt (versão multi-conta anterior)
-        if os.path.exists('usernames.txt'):
-            try:
-                with open("usernames.txt", "r") as data:
-                    usernames = [line.strip() for line in data.readlines() if line.strip()]
-            except:
-                pass
-                
-        # 2b. Fallback para listagem super antiga (username no userData ou username.txt)
-        if not usernames:
-            try:
-                config = load_config()
-                user_data = config.get("userData", {})
-                username = user_data.get("username", "")
-                if username:
-                    usernames.append(username)
-            except:
-                pass
-
-            if not usernames:
-                try:
-                    if os.path.exists("username.txt"):
-                        data = open("username.txt", "r")
-                        username = data.readline().strip()
-                        data.close()
-                        if username:
-                            usernames.append(username)
-                except:
-                    pass
-        
-        # Se encontrou e migrou dados legados, já salva no config.json para a próxima vez
-        if usernames:
-            saveUsernames(usernames)
-    
-    # Chamada da API para registrar o cliente (usa apenas o primeiro se houver)
+    # Tenta obter dados do config.json primeiro
     try:
-        username = usernames[0] if usernames else ""
+        config = load_config()
+        user_data = config.get("userData", {})
+        username = user_data.get("username", "")
+        email = user_data.get("email", "")
+    except:
+        username = ""
         email = ""
+    
+    # Fallback para username.txt se não encontrar no config.json
+    if not username:
         try:
-            config = load_config()
-            email = config.get("userData", {}).get("email", "")
+            data = open("username.txt", "r")
+            username = data.readline().strip()
+            data.close()
         except:
-            pass
-
+            username = ""
+    
+    # Chamada da API para registrar o cliente
+    try:
         api_body = {
             "client": os.getlogin(),
             "twitchUsername": username,
@@ -352,12 +320,7 @@ def scanUsernames():
     except Exception as e:
         pass
     
-    return usernames
-
-
-def saveUsernames(usernames_list):
-    """Salva a lista de nomes de usuário no arquivo config.json."""
-    return set_config_value("usernames", usernames_list)
+    return username
 
 
 config_file = "config.json"
