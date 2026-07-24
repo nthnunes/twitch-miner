@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      released: ${{ steps.psr.outputs.released }}
+      tag: ${{ steps.psr.outputs.tag }}
+      version: ${{ steps.psr.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Python Semantic Release
+        id: psr
+        uses: python-semantic-release/python-semantic-release@v9
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.tag }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install -r requirements-build.txt
+
+      - name: Install Chromium (Playwright)
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}\browsers
+        run: python -m playwright install chromium
+
+      - name: Build executables
+        run: |
+          pyinstaller -F --collect-all dateutil --collect-all win10toast run.py --onefile --name "TwitchMiner" --icon "icons/tray.png" --noconfirm --noconsole
+          pyinstaller -F tools/updater.py --name "updater" --icon "icons/window.ico" --noconfirm --noconsole
+          pyinstaller -F tools/uninstaller.py --name "desinstalar" --collect-all inquirer --collect-all readchar --collect-all blessed --noconfirm
+
+      - name: Assemble package
+        run: |
+          New-Item -ItemType Directory -Force -Path staging/TwitchMiner/browsers | Out-Null
+          Copy-Item dist/TwitchMiner.exe,dist/updater.exe,dist/desinstalar.exe staging/TwitchMiner/
+          Copy-Item -Recurse assets staging/TwitchMiner/assets
+          Copy-Item -Recurse icons staging/TwitchMiner/icons
+          Copy-Item -Recurse browsers/chromium-* staging/TwitchMiner/browsers/
+          Compress-Archive -Path staging/TwitchMiner -DestinationPath TwitchMiner.zip -Force
+
+      - name: Upload asset to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ needs.release.outputs.tag }} TwitchMiner.zip --clobber

@@ -42,8 +42,9 @@ formatted_path = original_path.replace("\\", "\\\\")
 final_path = formatted_path + "\\\\TwitchMiner"
 os.chdir(final_path)
 
+from _version import __version__ as version
+
 auto_update = load_auto_update()
-version = "2.1.4"
 
 # Flags para indicar quando abrir as janelas
 open_username_window = False
