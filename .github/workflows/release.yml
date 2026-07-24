@@ -58,7 +58,7 @@ jobs:
         run: |
           pyinstaller -F --collect-all dateutil --collect-all win10toast run.py --onefile --name "TwitchMiner" --icon "icons/tray.png" --noconfirm --noconsole
           pyinstaller -F tools/updater.py --name "updater" --icon "icons/window.ico" --noconfirm --noconsole
-          pyinstaller -F tools/uninstaller.py --name "desinstalar" --collect-all inquirer --collect-all readchar --collect-all blessed --noconfirm
+          pyinstaller -F tools/uninstaller.py --name "desinstalar" --icon "icons/window.ico" --noconfirm --noconsole
 
       - name: Assemble package
         run: |
