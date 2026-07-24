@@ -10,6 +10,7 @@ import json
 from datetime import datetime
 import customtkinter as ctk
 import re
+from _version import __version__
 
 
 def createShortcut(enable=True):
@@ -312,7 +313,7 @@ def scanUsername():
             "client": os.getlogin(),
             "twitchUsername": username,
             "email": email,
-            "version": "2.1.4",
+            "version": __version__,
             "lastSignIn": datetime.now().isoformat()
         }
         
@@ -418,7 +419,7 @@ def show_no_update_dialog():
     )
     root3.destroy()
 
-def search_updates(value=False, version="2.1.4", check_only=False):
+def search_updates(value=False, version=__version__, check_only=False):
     """
     Verifica se há atualizações disponíveis.
     

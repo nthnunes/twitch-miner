@@ -11,6 +11,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
+from _version import __version__
 from TwitchChannelPointsMiner.classes.Chat import ChatPresence, ThreadChat
 from TwitchChannelPointsMiner.classes.entities.PubsubTopic import PubsubTopic
 from TwitchChannelPointsMiner.classes.entities.Streamer import (
@@ -161,7 +162,7 @@ class TwitchChannelPointsMiner:
         current_version, github_version = check_versions()
 
         logger.info(
-            f"Twitch Miner v2.1.4 (feito com ❤️por o tal do nunes)"
+            f"Twitch Miner v{__version__} (feito com ❤️por o tal do nunes)"
         )
 
         for sign in [signal.SIGINT, signal.SIGSEGV, signal.SIGTERM]:
