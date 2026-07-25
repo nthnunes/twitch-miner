@@ -73,3 +73,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload ${{ needs.release.outputs.tag }} TwitchMiner.zip --clobber
+
+      - name: Publish version to API
+        env:
+          API_PUBLISH_TOKEN: ${{ secrets.API_PUBLISH_TOKEN }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: python scripts/publish_version.py
