@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v2.3.0 (2026-07-25)
+
+### Features
+
+- Add API version publishing functionality
+  ([`2568ad3`](https://github.com/nthnunes/twitch-miner/commit/2568ad30083f71f106f0f99146058f9adcb5450c))
+
+- Introduced a new script `publish_version.py` to publish version details to the API. - Updated the
+  GitHub Actions workflow to include a step for publishing the version after release. - The script
+  extracts the changelog section for the specified version and sends it along with the version and
+  download URL to the API.
+
+
 ## v2.2.0 (2026-07-24)
 
 ### Bug Fixes
